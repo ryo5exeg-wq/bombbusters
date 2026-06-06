@@ -127,7 +127,7 @@ button:active{transform:translateY(1px);}button:disabled{opacity:.4;}
       <div class="card boardcard"><h2><span class="tag">ボード（位置トラック）</span> 残数・赤●・黄▮ <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2><div class="track" id="ledger"></div>
         <div class="legend"><span><i class="dot" style="background:#c01b22;border-radius:50%"></i>●=赤</span><span><i class="dot" style="background:var(--gold)"></i>▮=黄</span><span>数字＝残り本数</span></div></div>
       <div class="card"><h2><span class="tag">装備カード</span> 共有・1回使い切り</h2><div id="equip"></div>
-        <div class="note">失敗帳消し＝残機+1／いつでもコーヒー＝もう1手番／探知機・付箋＝番号を1枚公開。その他は手動適用で「使った」記録だけ。</div></div>
+        <div class="note">失敗帳消し＝残機+1／いつでもコーヒー＝選んだプレイヤーから再開／探知機・付箋＝番号を1枚公開。その他は手動適用で「使った」記録だけ。</div></div>
       <div class="card"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
     </div>
     <div class="region-opp">
@@ -291,7 +291,7 @@ function useEquip(i){if(S.pickInfo)return;const e=S.equip[i];if(e.used||S.over)r
   if(e.kind==='ice'){if(S.turn!==0){alert('万能氷は自分の手番（行動の前）に使います');return;}S.iceShield=true;e.used=true;pushLog('装備「'+e.name+'」：この手番の失敗ペナルティを無効化（赤でも爆発しない・残機維持）。','ok');checkEnd();render();saveGame();return;}
   if(e.kind==='swap'){if(S.turn!==0){alert('入れ替えはあなたの手番で使ってください');return;}var sv=prompt('渡す相手（1='+S.players[1].name+' / 2='+S.players[2].name+' / 3='+S.players[3].name+'）');var sp=parseInt(sv);if(!(sp>=1&&sp<=3))return;S.swapMode=true;S.swapTarget=sp;S.swapEquipIdx=i;render();return;}
   if(e.kind==='life'){S.lives=Math.min(4,S.lives+1);e.used=true;pushLog('装備「'+e.name+'」：残機+1。','ok');}
-  else if(e.kind==='extra'){S.extra=true;e.used=true;pushLog('装備「'+e.name+'」：このあと同じプレイヤーがもう1手番。');}
+  else if(e.kind==='extra'){if(S.turn!==0){alert('いつでもコーヒーはあなたの手番に使います');return;}var cv=prompt('ゲームを再開するプレイヤーを選択（1='+S.players[1].name+' / 2='+S.players[2].name+' / 3='+S.players[3].name+'）');var cp=parseInt(cv);if(!(cp>=1&&cp<=3))return;e.used=true;S.sel=null;S.iceShield=false;S.turn=cp;pushLog('装備「'+e.name+'」：'+S.players[cp].name+' からゲームを再開します。','me');S._pending=(!S.over&&S.turn!==0)?decideMove(S.turn):null;checkEnd();render();saveGame();scheduleAuto();return;}
   else if(e.kind==='reveal'){const v=prompt('公開したい番号(1-12)：その番号の青い伏せ札を1枚オモテに');const n=parseInt(v);if(isNaN(n))return;let f=null;for(const p of S.players){for(const t of p.tiles){if(t.t==='B'&&t.n===n&&!t.cut&&!t.done&&!t.revealed){f=t;break;}}if(f)break;}if(f){f.revealed=true;e.used=true;pushLog('装備「'+e.name+'」：'+n+'を1枚公開。','ok');}else{alert('その番号の青い伏せ札が見つかりません');return;}}
   else{e.used=true;pushLog('装備「'+e.name+'」：効果はカード文どおり手動適用（使用済みに）。');}
   checkEnd();render();saveGame();
