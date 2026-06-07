@@ -90,20 +90,19 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 
 /* ===== landscape dashboard layout ===== */
 .boardgrid{display:flex;flex-direction:column;}
-.region-left .card,.region-opp .card,.region-cmd .card,.region-hand .card{margin-bottom:9px;}.region-left>.card{display:flex;flex-direction:column;}
+.boardequip .subh{margin-top:10px;}
+.myhandwrap{margin-top:8px;background:#fff6dd;border:2px solid var(--gold);border-radius:14px;padding:7px 9px;box-shadow:0 2px 0 #ecce97;}
+.myhandlabel{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:7px;}
+.youtag{background:var(--gold);color:#fff;border:1px solid #c9820f;border-radius:7px;font-size:10px;font-weight:900;padding:1px 6px;letter-spacing:.5px;}
 .sidetitle{display:none;}
 @media (orientation:landscape) and (min-width:840px){
   body{max-width:1340px;padding-left:54px;padding-right:54px;}
-  .boardgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);grid-template-areas:"left opp" "hand cmd";gap:12px;align-items:start;}
-  .region-left,.region-opp,.region-cmd,.region-hand{min-width:0;}
-  .region-left{grid-area:left;align-self:stretch;display:flex;flex-direction:column;}.region-left>.card{flex:1 1 auto;}.region-left>.card:last-child{margin-bottom:0;flex:0 0 auto;}.region-opp{grid-area:opp;}.region-cmd{grid-area:cmd;}.region-hand{grid-area:hand;}
-  .region-hand .tiles{padding-top:10px;}
+  .boardgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);grid-template-areas:"hands be" "hands cmd" "hands log" "hands ctrl" "hands .";gap:12px;align-items:start;}
+  .boardgrid>.card{margin-bottom:0;}
+  .handsbox{grid-area:hands;align-self:stretch;}
+  .boardequip{grid-area:be;}.cmdcard{grid-area:cmd;}.logcard{grid-area:log;}.ctrlcard{grid-area:ctrl;}
   .sidetitle{display:block;position:fixed;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-family:"Arial Black",Arial,Helvetica,sans-serif;font-weight:900;font-size:42px;line-height:1;letter-spacing:3px;color:var(--red);opacity:.95;pointer-events:none;z-index:5;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(160,95,20,.22);white-space:nowrap;}
   .sidetitle.left{left:6px;}.sidetitle.right{right:6px;}
-}
-@media (orientation:portrait){
-  .region-left,.region-opp,.region-cmd,.region-hand{display:contents;}
-  .boardcard{order:1;}.oppcard{order:2;}.logcard{order:3;}.equipcard{order:4;}.cmdcard{order:5;}.handcard{order:6;}.ctrlcard{order:7;}
 }
 </style>
 </head>
@@ -126,22 +125,20 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 <div id="board" class="hidden">
   <div id="banner"></div>
   <div class="boardgrid">
-    <div class="region-left">
-      <div class="card boardcard"><h2><span class="tag">ボード（位置トラック）</span> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2><div class="track" id="ledger"></div></div>
-      <div class="card equipcard"><h2><span class="tag">装備カード</span> 共有・1回使い切り</h2><div id="equip"></div>
-        <div class="note">失敗帳消し＝残機+1／いつでもコーヒー＝選んだプレイヤーから再開／探知機・付箋＝番号を1枚公開。その他は手動適用で「使った」記録だけ。</div></div>
-      <div class="card logcard"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
+    <div class="card boardequip">
+      <h2><span class="tag">ボード（位置トラック）</span> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
+      <div class="track" id="ledger"></div>
+      <h2 class="subh"><span class="tag">装備カード</span> 共有・1回使い切り</h2>
+      <div id="equip"></div>
     </div>
-    <div class="region-opp">
-      <div class="card oppcard"><h2><span class="tag">仲間の卓</span> 公開分のみ表向き・タップで宣言対象に</h2><div id="others"></div></div>
+    <div class="card handsbox">
+      <h2><span class="tag">みんなの手札</span></h2>
+      <div id="others"></div>
+      <div class="myhandwrap"><div class="myhandlabel"><span class="youtag">YOU</span> あなた（りょうま） <span id="myDet"></span></div><div id="myhand"></div></div>
     </div>
-    <div class="region-cmd">
-      <div class="card cmdcard"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
-    </div>
-    <div class="region-hand">
-      <div class="card handcard"><h2><span class="tag">あなたの手札</span> <span id="myDet"></span> 昇順</h2><div id="myhand"></div></div>
-      <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
-    </div>
+    <div class="card cmdcard"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
+    <div class="card logcard"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
+    <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
   </div>
 </div>
 <script>
