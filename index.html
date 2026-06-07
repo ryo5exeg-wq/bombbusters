@@ -92,7 +92,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .boardgrid{display:flex;flex-direction:column;}
 .region-left .card,.region-opp .card,.region-cmd .card,.region-hand .card{margin-bottom:9px;}.region-left>.card{display:flex;flex-direction:column;}
 .sidetitle{display:none;}
-@media(min-width:840px){
+@media (orientation:landscape) and (min-width:840px){
   body{max-width:1340px;padding-left:54px;padding-right:54px;}
   .boardgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);grid-template-areas:"left opp" "hand cmd";gap:12px;align-items:start;}
   .region-left,.region-opp,.region-cmd,.region-hand{min-width:0;}
@@ -100,6 +100,10 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
   .region-hand .tiles{padding-top:10px;}
   .sidetitle{display:block;position:fixed;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-family:"Arial Black",Arial,Helvetica,sans-serif;font-weight:900;font-size:42px;line-height:1;letter-spacing:3px;color:var(--red);opacity:.95;pointer-events:none;z-index:5;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(160,95,20,.22);white-space:nowrap;}
   .sidetitle.left{left:6px;}.sidetitle.right{right:6px;}
+}
+@media (orientation:portrait){
+  .region-left,.region-opp,.region-cmd,.region-hand{display:contents;}
+  .boardcard{order:1;}.oppcard{order:2;}.logcard{order:3;}.equipcard{order:4;}.cmdcard{order:5;}.handcard{order:6;}.ctrlcard{order:7;}
 }
 </style>
 </head>
@@ -124,19 +128,19 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
   <div class="boardgrid">
     <div class="region-left">
       <div class="card boardcard"><h2><span class="tag">ボード（位置トラック）</span> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2><div class="track" id="ledger"></div></div>
-      <div class="card"><h2><span class="tag">装備カード</span> 共有・1回使い切り</h2><div id="equip"></div>
+      <div class="card equipcard"><h2><span class="tag">装備カード</span> 共有・1回使い切り</h2><div id="equip"></div>
         <div class="note">失敗帳消し＝残機+1／いつでもコーヒー＝選んだプレイヤーから再開／探知機・付箋＝番号を1枚公開。その他は手動適用で「使った」記録だけ。</div></div>
-      <div class="card"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
+      <div class="card logcard"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
     </div>
     <div class="region-opp">
-      <div class="card"><h2><span class="tag">仲間の卓</span> 公開分のみ表向き・タップで宣言対象に</h2><div id="others"></div></div>
+      <div class="card oppcard"><h2><span class="tag">仲間の卓</span> 公開分のみ表向き・タップで宣言対象に</h2><div id="others"></div></div>
     </div>
     <div class="region-cmd">
-      <div class="card"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
+      <div class="card cmdcard"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
     </div>
     <div class="region-hand">
-      <div class="card"><h2><span class="tag">あなたの手札</span> <span id="myDet"></span> 昇順</h2><div id="myhand"></div></div>
-      <div class="card"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
+      <div class="card handcard"><h2><span class="tag">あなたの手札</span> <span id="myDet"></span> 昇順</h2><div id="myhand"></div></div>
+      <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
     </div>
   </div>
 </div>
