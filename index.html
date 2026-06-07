@@ -33,6 +33,9 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .boardcard .lives{font-size:22px;}
 .seat{background:#fff7e3;border:2px solid var(--line);border-radius:14px;padding:6px 8px;margin-bottom:6px;}
 .seat.active{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;}
+.seat.you{background:#fff6dd;border-color:var(--gold);}
+.seat.you.active{box-shadow:0 0 0 2px var(--gold) inset;}
+.capmark{display:inline-block;background:var(--gold);color:#fff;border:1px solid #c9820f;border-radius:6px;font-size:10px;font-weight:900;padding:1px 6px;}
 .seat .nm{font-weight:800;font-size:14px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;color:var(--ink);}
 .seat .nmL{display:flex;align-items:center;gap:7px;}
 .tiles{display:flex;flex-wrap:wrap;column-gap:5px;row-gap:26px;padding-top:14px;padding-bottom:16px;}
@@ -93,13 +96,15 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .boardequip .subh{margin-top:10px;}
 .myhandwrap{margin-top:8px;background:#fff6dd;border:2px solid var(--gold);border-radius:14px;padding:7px 9px;box-shadow:0 2px 0 #ecce97;}
 .myhandlabel{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:7px;}
+#actionbar{margin-top:8px;}#actionbar .btnrow button{min-width:96px;padding:12px;}
+.handsbox .turnbar{margin-top:8px;}
 .sidetitle{display:none;}
 @media (orientation:landscape) and (min-width:840px){
   body{max-width:1340px;padding-left:54px;padding-right:54px;}
-  .boardgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);grid-template-areas:"hands be" "hands cmd" "hands log" "hands ctrl" "hands .";gap:12px;align-items:start;}
+  .boardgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);grid-template-areas:"hands be" "hands log" "hands ctrl";gap:12px;align-items:start;}
   .boardgrid>.card{margin-bottom:0;}
   .handsbox{grid-area:hands;align-self:stretch;}
-  .boardequip{grid-area:be;}.cmdcard{grid-area:cmd;}.logcard{grid-area:log;}.ctrlcard{grid-area:ctrl;}
+  .boardequip{grid-area:be;}.logcard{grid-area:log;}.ctrlcard{grid-area:ctrl;}
   .sidetitle{display:block;position:fixed;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-family:"Arial Black",Arial,Helvetica,sans-serif;font-weight:900;font-size:42px;line-height:1;letter-spacing:3px;color:var(--red);opacity:.95;pointer-events:none;z-index:5;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(160,95,20,.22);white-space:nowrap;}
   .sidetitle.left{left:6px;}.sidetitle.right{right:6px;}
 }
@@ -117,7 +122,6 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
       <option value="8">#8 最終試験(赤2本のうち1本/黄3本のうち2本)</option>
     </select></div>
   </div>
-  <div class="row"><div><label>装備カードの枚数（人数ぶん＝4）</label><input id="equipN" type="number" value="4" inputmode="numeric"></div></div>
   <div class="btnrow"><button onclick="deal()">配って開始</button><button class="ghost" onclick="loadSaved()">前回を読み込む</button></div>
   <div class="note">※ お手元のゲーム用の個人補助ツールです。盤面管理と思考補助をするもので、ゲーム本体やカード・ルールブックの再現ではありません。仮想の手札は端末内のみに保持し伏せて表示します。</div>
 </div>
@@ -132,10 +136,11 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
     </div>
     <div class="card handsbox">
       <h2><span class="tag">みんなの手札</span></h2>
-      <div id="others"></div>
-      <div class="myhandwrap"><div class="myhandlabel">あなた（りょうま） <span id="myDet"></span></div><div id="myhand"></div></div>
+      <div id="hands"></div>
+      <div id="actionbar"></div>
+      <div class="turnbar" id="turnbar"></div>
+      <div id="declareArea"></div>
     </div>
-    <div class="card cmdcard"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
     <div class="card logcard"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
     <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
   </div>
@@ -172,12 +177,12 @@ function deal(){
     var yg=[];players.forEach(p=>p.tiles.forEach(t=>{if(t.t==='Y')yg.push(Math.floor(t.val));}));
     if(yg.length){var oth2=[1,2,3,4,5,6,7,8,9,10,11].filter(x=>yg.indexOf(x)<0);var dec2=oth2[Math.floor(Math.random()*oth2.length)];yellowCandidates=shuffle(yg.concat([dec2]));yellowUncertain=true;}
   }
-  const en=Math.max(0,Math.min(12,parseInt(g('equipN').value)||4));
+  const en=4;
   const equip=pick([1,2,3,4,5,6,7,8,9,10,11,12],en).map(id=>({id,name:EQUIP[id].name,kind:EQUIP[id].kind,used:false,num:id}));
   equip.sort((a,b)=>a.num-b.num);
   var skill=0;try{skill=parseInt(localStorage.getItem('bb_skill'))||0;}catch(e){}
   var order=shuffle([0,1,2,3]);var captain=order[0];
-  S={players,reds:R,yellows:Y,lives:4,turn:0,cut:{},yCut:0,redDone:0,over:null,sel:null,pick:null,extra:false,passStreak:0,equip,mission:mname,skill:skill,_scored:false,redUncertain:redUncertain,redCandidates:redCandidates,yellowUncertain:yellowUncertain,yellowCandidates:yellowCandidates,detMode:false,detSel:[],detKind:'free',detEquipIdx:-1,detDecls:[],detPick:null,infoPlace:null,labelMode:false,labelSel:[],labelKind:null,labelEquipIdx:-1,swapMode:false,swapTarget:-1,swapEquipIdx:-1,iceShield:false,pickInfo:false,captain:captain,order:order,infoPhase:true,infoIdx:0,log:[]};
+  S={players,reds:R,yellows:Y,lives:4,turn:0,cut:{},yCut:0,redDone:0,over:null,sel:null,pick:null,extra:false,passStreak:0,equip,mission:mname,skill:skill,_scored:false,redUncertain:redUncertain,redCandidates:redCandidates,yellowUncertain:yellowUncertain,yellowCandidates:yellowCandidates,detMode:false,detSel:[],detKind:'free',detEquipIdx:-1,detDecls:[],detPick:null,infoPlace:null,ownSel:null,labelMode:false,labelSel:[],labelKind:null,labelEquipIdx:-1,swapMode:false,swapTarget:-1,swapEquipIdx:-1,iceShield:false,pickInfo:false,captain:captain,order:order,infoPhase:true,infoIdx:0,log:[]};
   pushLog('['+mname+'] 配り完了。赤'+R+'・黄'+Y+'を含む'+(48+R+Y)+'枚を4卓へ。装備'+en+'枚。各自1枚公開。');
   pushLog('AIレベル Lv.'+skill+'（プレイを重ねるほど賢くなります）。'+(redUncertain?' #8：赤は「？2カ所」のどちらか1本、黄は「？3カ所」のいずれか2本。':''));
   pushLog('👑 隊長（親）は <b>'+players[captain].name+'</b>。手番順：'+order.map(function(i){return players[i].name;}).join(' → ')+'。');
@@ -251,7 +256,7 @@ function resolveMove(mv,pi){
   else{S.passStreak=(S.passStreak||0)+1;pushLog(me.name+'：（行動なし）。');}
 }
 function handEmpty(pi){return !S.players[pi].tiles.some(function(t){return !t.cut&&!t.done;});}
-function advanceTurn(){if(S.extra){S.extra=false;pushLog('（追加手番：同じプレイヤーがもう一度）');}else{var pos=S.order.indexOf(S.turn);for(var k=0;k<S.order.length;k++){pos=(pos+1)%S.order.length;if(!handEmpty(S.order[pos]))break;}S.turn=S.order[pos];}S.sel=null;S.iceShield=false;}function isEquipMove(k){return k==='equip'||k==='equipLife';}function scheduleAuto(){if(S._pending){setTimeout(function(){if(S.over||S.turn===0||!S._pending)return;var mv=S._pending;S._pending=null;resolveMove(mv,S.turn);checkEnd();if(S.infoPlace){render();saveGame();return;}if(!S.over&&isEquipMove(mv.kind)){S._pending=decideMove(S.turn);render();saveGame();scheduleAuto();}else{nextTurn();}},900);}}function nextTurn(){if(S.over){S._pending=null;render();saveGame();return;}advanceTurn();S._pending=(!S.over&&S.turn!==0)?decideMove(S.turn):null;render();saveGame();scheduleAuto();}
+function advanceTurn(){if(S.extra){S.extra=false;pushLog('（追加手番：同じプレイヤーがもう一度）');}else{var pos=S.order.indexOf(S.turn);for(var k=0;k<S.order.length;k++){pos=(pos+1)%S.order.length;if(!handEmpty(S.order[pos]))break;}S.turn=S.order[pos];}S.sel=null;S.ownSel=null;S.iceShield=false;}function isEquipMove(k){return k==='equip'||k==='equipLife';}function scheduleAuto(){if(S._pending){setTimeout(function(){if(S.over||S.turn===0||!S._pending)return;var mv=S._pending;S._pending=null;resolveMove(mv,S.turn);checkEnd();if(S.infoPlace){render();saveGame();return;}if(!S.over&&isEquipMove(mv.kind)){S._pending=decideMove(S.turn);render();saveGame();scheduleAuto();}else{nextTurn();}},900);}}function nextTurn(){if(S.over){S._pending=null;render();saveGame();return;}advanceTurn();S._pending=(!S.over&&S.turn!==0)?decideMove(S.turn):null;render();saveGame();scheduleAuto();}
 
 function detectorResolve(actorPi,targetPi,idxs,decls){var act=S.players[actorPi];var DP=S.players[targetPi];var tiles=idxs.map(function(i){return DP.tiles[i];});var hitTile=null,hitVal=null;for(var d=0;d<decls.length&&!hitTile;d++){var v=decls[d];for(var t=0;t<tiles.length;t++){var T=tiles[t];if(v==='Y'){if(T.t==='Y'&&!T.cut&&!T.done){hitTile=T;hitVal='Y';break;}}else{if(T.t==='B'&&T.n===v&&!T.cut&&!T.done){hitTile=T;hitVal=v;break;}}}}var declStr=decls.map(function(v){return v==='Y'?'黄':v;}).join('・');var posStr=idxs.map(function(i){return L(i);}).join('・');if(hitTile){var my=(hitVal==='Y')?act.tiles.find(function(t){return t.t==='Y'&&!t.cut&&!t.done;}):act.tiles.find(function(t){return t.t==='B'&&t.n===hitVal&&!t.cut&&!t.done;});var hitPos=L(DP.tiles.indexOf(hitTile));hitTile.cut=true;if(my)my.cut=true;if(hitVal==='Y')S.yCut+=2;recomputeCuts();pushLog('<b>'+act.name+'</b>：探知機 → '+DP.name+' の'+posStr+'（'+idxs.length+'本）に「'+declStr+'」→ 命中！'+DP.name+'の'+hitPos+'の'+(hitVal==='Y'?'黄':hitVal)+'を切断。','ok');}else{S.lives--;var opts=(targetPi===0)?idxs.filter(function(i){var tt=DP.tiles[i];return tt.t!=='R'&&!tt.cut&&!tt.done&&!tt.revealed;}):[];if(opts.length){S.infoPlace={actor:act.name,opts:opts};pushLog('<b>'+act.name+'</b>：探知機 → '+DP.name+' の'+posStr+'（'+idxs.length+'本）に「'+declStr+'」→ 外れ。残機-1。<b>対象のコードに情報トークンを置きます。</b>','bad');}else{var nr=tiles.filter(function(t){return t.t!=='R'&&!t.cut&&!t.done;});var infoPos=null,infoN=null;if(nr.length){nr[0].revealed=true;infoPos=L(DP.tiles.indexOf(nr[0]));infoN=nr[0].n;}pushLog('<b>'+act.name+'</b>：探知機 → '+DP.name+' の'+posStr+'（'+idxs.length+'本）に「'+declStr+'」→ 外れ。'+(infoPos?DP.name+'の'+infoPos+'（'+infoN+'）に情報トークンを置き':'情報トークンを置き')+'残機-1。','bad');}}}
 function youCutSelect(pi,i){if(S.turn!==0||S.over||S.pick||S.pickInfo)return;if(S.labelMode){return;}if(S.detMode){if(pi===0)return;var cfg=DETCFG[S.detKind];if(S.detSel.length&&S.detSel[0].pi!==pi)S.detSel=[];if(!S.detSel.some(function(x){return x.pi===pi&&x.i===i;})&&S.detSel.length<cfg.tiles)S.detSel.push({pi:pi,i:i});render();return;}S.sel={pi,i};render();}
@@ -264,6 +269,10 @@ function youLabelSelect(idx){if(!S.labelMode)return;var t=S.players[0].tiles[idx
 function resolveLabel(){var a=S.labelSel[0],b=S.labelSel[1];if(a.pi!==b.pi){alert('同じ台の2本を選んでね');S.labelSel=[];render();return;}var pi=a.pi;var P=S.players[pi];var lo=Math.min(a.i,b.i),hi=Math.max(a.i,b.i);if(hi!==lo+1){alert('隣り合う2本を選んでね');S.labelSel=[];render();return;}var t1=P.tiles[lo],t2=P.tiles[hi];function mvv(t){return t.t==='B'?('N'+t.n):(t.t==='Y'?'Y':('R'+t.n));}var same=(t1.t!=='R'&&t2.t!=='R'&&mvv(t1)===mvv(t2));var wantSame=(S.labelKind==='equal');if(same!==wantSame){alert(wantSame?'この2本は同じ数字ではないので、イコールラベルは使えません':'この2本は同じ数字なので、コトナルラベルは使えません');S.labelSel=[];render();return;}P.tiles[lo].relRight=wantSame?'=':'\u2260';S.equip[S.labelEquipIdx].used=true;pushLog('<b>あなた</b>：「'+S.equip[S.labelEquipIdx].name+'」→ '+P.name+' の'+L(lo)+'・'+L(hi)+'は '+(wantSame?'＝（同じ）':'≠（違う）')+'。','me');S.labelMode=false;S.labelSel=[];S.labelKind=null;S.labelEquipIdx=-1;render();saveGame();}
 function startEquipDetector(kind,i){if(S.pickInfo||S.turn!==0)return;S.detMode=true;S.detKind=kind;S.detEquipIdx=i;S.detSel=[];S.detDecls=[];S.sel=null;render();}
 function cancelDetector(){S.detMode=false;S.detSel=[];S.detDecls=[];S.detKind='free';S.detEquipIdx=-1;render();}
+function youOwnSelect(idx){if(S.turn!==0||S.over)return;if(S.pickInfo||S.pick||S.detPick||S.infoPlace||S.swapMode||S.labelMode)return;var t=S.players[0].tiles[idx];if(!t||t.cut||t.done)return;if(S.detMode){youDetDeclare(t.t==='Y'?'Y':t.n);return;}S.ownSel=(S.ownSel===idx)?null:idx;render();}
+function youCut2(){if(S.turn!==0||S.over||S.detMode)return;if(!S.sel||S.ownSel==null){alert('相手の手札と自分の手札を1枚ずつタップしてね');return;}var my=S.players[0].tiles[S.ownSel];var val=(my.t==='Y')?'Y':my.n;var ownIdx=S.ownSel;S.ownSel=null;youGuess(val);if(S.pick)youPickOwn(ownIdx);}
+function youCut1(){if(S.turn!==0||S.over||S.detMode)return;if(S.ownSel==null){alert('単独で切る自分の手札を1枚タップしてね');return;}var my=S.players[0].tiles[S.ownSel];S.ownSel=null;if(my.t==='Y')youSoloYellow();else youSolo(my.n);}
+function youDetBtn(){if(S.turn!==0||S.over)return;if(S.detMode){cancelDetector();return;}if(!S.players[0].detector){alert('フツーノ探知機は使用済みです');return;}startDetector();}
 function youDetDeclare(val){var cfg=DETCFG[S.detKind];if(val==='Y'&&!cfg.yellow){alert('数値(1〜12)を宣言してください');return;}if(S.detSel.length!==cfg.tiles){alert('仲間1人のコードを'+cfg.sel+'タップして選んでね');return;}if(cfg.decls===1){if(val==='Y'){if(!S.players[0].tiles.some(function(t){return t.t==='Y'&&!t.cut&&!t.done;})){alert('合わせる黄が自分の手札にありません');return;}}else{if(!S.players[0].tiles.some(function(t){return t.t==='B'&&t.n===val&&!t.cut&&!t.done;})){alert('合わせる'+val+'が自分の手札にありません');return;}}}S.detDecls.push(val);if(S.detDecls.length<cfg.decls){render();return;}var _idxs=S.detSel.map(function(x){return x.i;});var _tpi=S.detSel[0].pi;var _decls=S.detDecls.slice();var _DP=S.players[_tpi];var _tiles=_idxs.map(function(i){return _DP.tiles[i];});var _hit=null,_hv=null;for(var _d=0;_d<_decls.length&&!_hit;_d++){var _v=_decls[_d];for(var _t=0;_t<_tiles.length;_t++){var _T=_tiles[_t];if(_v==='Y'){if(_T.t==='Y'&&!_T.cut&&!_T.done){_hit=_T;_hv='Y';break;}}else{if(_T.t==='B'&&_T.n===_v&&!_T.cut&&!_T.done){_hit=_T;_hv=_v;break;}}}}if(_hit){var _cand=(_hv==='Y')?S.players[0].tiles.filter(function(t){return t.t==='Y'&&!t.cut&&!t.done;}).length:S.players[0].tiles.filter(function(t){return t.t==='B'&&t.n===_hv&&!t.cut&&!t.done;}).length;if(_cand>1){S.detPick={tpi:_tpi,hitIdx:_DP.tiles.indexOf(_hit),hitVal:_hv,idxCount:_idxs.length,idxs:_idxs.slice(),equipIdx:S.detEquipIdx};S.detMode=false;S.detSel=[];S.detDecls=[];S.detKind='free';S.detEquipIdx=-1;render();return;}}detectorResolve(0,_tpi,_idxs,_decls);if(S.detEquipIdx>=0){S.equip[S.detEquipIdx].used=true;}else{S.players[0].detector=false;}S.detMode=false;S.detSel=[];S.detDecls=[];S.detKind='free';S.detEquipIdx=-1;checkEnd();nextTurn();}
 function youGuess(val){
   if(S.detMode){youDetDeclare(val);return;}
@@ -337,34 +346,19 @@ function render(){
     da.innerHTML='<div class="declare" style="border-color:var(--gold)">'+lname+'：自分の手札の<b>隣り合う2本</b>をタップ（公開済み・切断済みも可）。選択 '+S.labelSel.length+'/2 <button class="ghost" style="margin-left:6px;padding:4px 8px" onclick="cancelLabel()">取消</button></div>';
   }
   else if(S.turn===0&&S.detMode){
-    var cfg=DETCFG[S.detKind];var ready=(S.detSel.length===cfg.tiles);
-    let h='<div class="declare" style="border-color:var(--green)">'+cfg.name+'：<b>仲間1人のコードを'+cfg.sel+'</b>タップ→数値を'+cfg.decls+'個宣言。赤に当たっても爆発しません。選択 '+S.detSel.length+'/'+cfg.tiles+'・宣言 '+S.detDecls.length+'/'+cfg.decls+' <button class="ghost" style="margin-left:6px;padding:4px 8px" onclick="cancelDetector()">取消</button></div>';
-    h+='<div class="num">';for(let n=1;n<=12;n++)h+='<button class="sec" '+(ready?'':'disabled')+' onclick="youGuess('+n+')">'+n+'</button>';
-    if(cfg.yellow)h+='<button class="sec" style="color:var(--gold)" '+(ready?'':'disabled')+' onclick="youGuess(\'Y\')">黄</button>';
-    h+='</div>';
-    da.innerHTML=h;
+    var cfg=DETCFG[S.detKind];
+    da.innerHTML='<div class="declare" style="border-color:var(--green)">'+cfg.name+'：<b>相手の手札を'+cfg.sel+'</b>＋<b>自分の手札（数字）を'+cfg.decls+'枚</b>タップ。赤に当たっても爆発しません。選択 '+S.detSel.length+'/'+cfg.tiles+'・数字 '+S.detDecls.length+'/'+cfg.decls+' <button class="ghost" style="margin-left:6px;padding:4px 8px" onclick="cancelDetector()">取消</button></div>';
   }
   else if(S.turn===0&&S.detPick){
     da.innerHTML='<div class="declare" style="border-color:var(--green)">探知が命中！ <b>自分のどの '+(S.detPick.hitVal==='Y'?'黄':S.detPick.hitVal)+' を切るか</b>を、下の手札でタップして選んでください。</div>';
   }
   else if(S.turn===0){
-    let h='';if(S.pick){h+='<div class="declare" style="border-color:var(--gold)">「'+S.pick.n+'」が当たり！ <b>自分のどの '+S.pick.n+' を切るか</b>を、下の手札でタップして選んでください。<button class="ghost" style="margin-left:6px;padding:4px 8px" onclick="cancelPick()">取消</button></div>';}h+='<div class="declare">あなたの番。下のどれか1つを行動。（AI Lv.'+(S.skill||0)+'）</div>';
-    h+='<div class="sect"><div class="t">① 2人で切る</div><div class="muted">仲間のタイルをタップ→数字/黄ボタンで宣言。選択中：<b>'+(S.sel?S.players[S.sel.pi].name+'の'+L(S.sel.i)+'':'なし')+'</b></div><div class="num" style="margin-top:6px">';
-    for(let n=1;n<=12;n++)h+='<button class="sec" onclick="youGuess('+n+')">'+n+'</button>';
-    h+='<button class="sec" style="color:var(--gold)" onclick="youGuess(\'Y\')">黄</button></div></div>';
-    const solo=[];for(let n=1;n<=12;n++){const c=S.players[0].tiles.filter(x=>x.t==='B'&&x.n===n&&!x.cut).length;if(c>=2&&c===(4-cutBlue(n)))solo.push(n);}
-    var myY=S.players[0].tiles.filter(function(t){return t.t==='Y'&&!t.cut&&!t.done;}).length;var totY=0;S.players.forEach(function(p){p.tiles.forEach(function(t){if(t.t==='Y'&&!t.cut&&!t.done)totY++;});});var ySolo=(myY>=2&&myY===totY);
-    h+='<div class="sect"><div class="t">② 単独で切る</div><div class="muted">「その数字（または黄）の<b>残り全部</b>を自分が持つ」ときだけ可能。</div>';
-    if(solo.length||ySolo){h+='<div class="btnrow">';solo.forEach(n=>h+='<button class="blue" onclick="youSolo('+n+')">単独切断 '+n+'</button>');if(ySolo)h+='<button class="blue" onclick="youSoloYellow()">単独切断 黄('+myY+')</button>';h+='</div>';}
-    else h+='<div class="muted" style="margin-top:4px">→ 今は条件を満たす数字がありません。</div>';
-    h+='</div>';
-    const myAct=S.players[0].tiles.filter(t=>!t.cut&&!t.done);const allRed=myAct.length>0&&myAct.every(t=>t.t==='R');
-    h+='<div class="sect"><div class="t">③ その他</div><div class="muted">赤の公開は「手札が赤のみ」のときだけ可能。</div><div class="btnrow">';
-    if(allRed)h+='<button class="danger" onclick="youRevealRed()">赤を全部公開</button>';
-    if(S.players[0].detector)h+='<button class="sec" style="color:var(--green)" onclick="startDetector()">探知機を使う（残1）</button>';
-    h+='</div><div class="muted" style="margin-top:4px">※このゲームにパスはありません。自信が無くても2人切断で勝負するか、装備カードで手がかりを得ます。</div></div>';
+    var h='';
+    if(S.pick){h+='<div class="declare" style="border-color:var(--gold)">「'+S.pick.n+'」が当たり！自分の '+S.pick.n+' をタップして切ってください。<button class="ghost" style="margin-left:6px;padding:4px 8px" onclick="cancelPick()">取消</button></div>';}
+    else{var selTxt=S.sel?(S.players[S.sel.pi].name+'の'+L(S.sel.i)):'なし';var ot=(S.ownSel!=null)?S.players[0].tiles[S.ownSel]:null;var ownTxt=ot?('自分の'+L(S.ownSel)+'（'+(ot.t==='Y'?'黄':ot.n)+'）'):'なし';h+='<div class="declare"><b>あなたの番</b>。相手＋自分の手札をタップ→下のボタンで行動。<br>相手：<b>'+selTxt+'</b> ／ 自分：<b>'+ownTxt+'</b></div>';}
     da.innerHTML=h;
-  } else { if(S.infoPhase){da.innerHTML='<div class="declare">'+S.players[S.turn].name+' が情報トークンを置いています…</div>';} else {const mv=S._pending||decideMove(S.turn);da.innerHTML='<div class="declare"><b>'+S.players[S.turn].name+'</b> の番（自動進行中…）：<br>'+mv.text+'</div>';} }
+    } else { if(S.infoPhase){da.innerHTML='<div class="declare">'+S.players[S.turn].name+' が情報トークンを置いています…</div>';} else {const mv=S._pending||decideMove(S.turn);da.innerHTML='<div class="declare"><b>'+S.players[S.turn].name+'</b> の番（自動進行中…）：<br>'+mv.text+'</div>';} }
+  var ab=g('actionbar');if(ab){if(S.turn===0&&!S.over&&!S.pickInfo&&!S.infoPlace&&!S.pick&&!S.detPick&&!S.swapMode&&!S.labelMode){var det=S.players[0].detector;var dl=S.detMode?'探知機：選択中（取消）':(det?'フツーノ探知機':'探知機 使用済');var hb='<div class="btnrow">';hb+='<button class="blue" onclick="youCut2()">切断（2人）</button>';hb+='<button class="sec" onclick="youCut1()">切断（1人）</button>';hb+='<button class="sec" '+((det||S.detMode)?'':'disabled')+' onclick="youDetBtn()">'+dl+'</button>';var ma=S.players[0].tiles.filter(function(t){return !t.cut&&!t.done;});if(ma.length>0&&ma.every(function(t){return t.t==='R';}))hb+='<button class="danger" onclick="youRevealRed()">赤を全部公開</button>';hb+='</div>';ab.innerHTML=hb;}else{ab.innerHTML='';}}
   g('log').innerHTML=S.log.slice(0,60).join('');
   // track
   const lw=g('ledger');lw.innerHTML='';
@@ -381,28 +375,39 @@ function render(){
       gap.className='tgap'+((rHas||yHas)?'':' empty');
       gap.innerHTML=yPart+rPart;
       lw.appendChild(gap);}}
-  // my hand
-  const me=S.players[0];const mw=g('myhand');mw.innerHTML='';const mtw=document.createElement('div');mtw.className='tiles';
-  var pendRelM=null;
-  me.tiles.forEach((t,idx)=>{const active=!t.cut&&!t.done;if(pendRelM){var rmm=document.createElement('div');rmm.className='rel '+(pendRelM==='='?'eq':'ne');rmm.textContent=pendRelM;mtw.appendChild(rmm);pendRelM=null;}const tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,true);const el=tmp.firstChild;if(S.pick&&t.t==='B'&&t.n===S.pick.n&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPickOwn(idx);}if(S.detPick){var _dt=S.players[0].tiles[idx];var _okk=(S.detPick.hitVal==='Y')?(_dt.t==='Y'&&!_dt.cut&&!_dt.done):(_dt.t==='B'&&_dt.n===S.detPick.hitVal&&!_dt.cut&&!_dt.done);if(_okk){el.classList.add('sel');el.onclick=()=>youDetPickOwn(idx);}}if(S.infoPlace&&S.infoPlace.opts&&S.infoPlace.opts.indexOf(idx)>=0){el.classList.add('sel');el.onclick=()=>placeMissInfo(idx);}if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPlaceInfo(idx);}if(S.swapMode&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youSwapGive(idx);}if(S.labelMode){el.onclick=()=>youLabelSelect(idx);if(S.labelSel.some(function(x){return x.i===idx;}))el.classList.add('sel');}el.insertAdjacentHTML('beforeend','<span class="lt">'+L(idx)+'</span>');mtw.appendChild(el);if(t.relRight)pendRelM=t.relRight;});
-  mw.appendChild(mtw);
-  var _md=g('myDet');if(_md)_md.innerHTML='<span class="detchip '+(S.players[0].detector?'avail':'used')+'">探知機 '+(S.players[0].detector?'●使用可':'✓使用済')+'</span>';
-  // others
-  const ow=g('others');ow.innerHTML='';
-  S.players.forEach((p,pi)=>{if(pi===0)return;const active=p.tiles.filter(t=>!t.cut&&!t.done).length;
-    const seat=document.createElement('div');seat.className='seat'+(S.turn===pi?' active':'');
-    seat.innerHTML='<div class="nm"><span class="nmL">'+p.name+'<span class="detchip '+(p.detector?'avail':'used')+'">探知機 '+(p.detector?'●使用可':'✓使用済')+'</span></span><span class="muted">残り'+active+'</span></div>';
-    const tw=document.createElement('div');tw.className='tiles';var pendRel=null;
-    p.tiles.forEach((t,i)=>{const active=!t.cut&&!t.done;
-      if(active&&pendRel){var rmk=document.createElement('div');rmk.className='rel '+(pendRel==='='?'eq':'ne');rmk.textContent=pendRel;tw.appendChild(rmk);pendRel=null;}
-      const shown=t.revealed||t.cut||t.done||S.showAll;const tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,shown);const el=tmp.firstChild;
-      if(S.sel&&S.sel.pi===pi&&S.sel.i===i)el.classList.add('sel');
-      if(S.detMode&&S.detSel.some(function(x){return x.pi===pi&&x.i===i;}))el.classList.add('sel');
-      if(S.labelMode&&S.labelSel.some(function(x){return x.pi===pi&&x.i===i;}))el.classList.add('sel');
-      if(S.turn===0&&!S.over&&!t.cut&&!t.done)el.onclick=()=>youCutSelect(pi,i);
+  // all hands, ordered from captain (親) downward; own hand highlighted
+  const hw=g('hands');hw.innerHTML='';
+  var _ci=S.order.indexOf(S.captain);if(_ci<0)_ci=0;var _disp=[];for(var _k=0;_k<S.order.length;_k++)_disp.push(S.order[(_ci+_k)%S.order.length]);
+  _disp.forEach(function(pi){var p=S.players[pi];var isYou=(pi===0);var active=p.tiles.filter(function(t){return !t.cut&&!t.done;}).length;
+    var seat=document.createElement('div');seat.className='seat'+(S.turn===pi?' active':'')+(isYou?' you':'');
+    var cap=(pi===S.captain)?'<span class="capmark">親</span> ':'';
+    var det='<span class="detchip '+(p.detector?'avail':'used')+'">探知機 '+(p.detector?'●使用可':'✓使用済')+'</span>';
+    var nm=isYou?('あなた（'+p.name+'）'):p.name;
+    seat.innerHTML='<div class="nm"><span class="nmL">'+cap+nm+det+'</span><span class="muted">残り'+active+'</span></div>';
+    var tw=document.createElement('div');tw.className='tiles';var pendRel=null;
+    p.tiles.forEach(function(t,i){var act=!t.cut&&!t.done;
+      if(pendRel){var rmk=document.createElement('div');rmk.className='rel '+(pendRel==='='?'eq':'ne');rmk.textContent=pendRel;tw.appendChild(rmk);pendRel=null;}
+      var shown=isYou?true:(t.revealed||t.cut||t.done||S.showAll);
+      var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,shown);var el=tmp.firstChild;
+      if(isYou){
+        if(S.pick&&t.t==='B'&&t.n===S.pick.n&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPickOwn(i);}
+        if(S.detPick){var _okk=(S.detPick.hitVal==='Y')?(t.t==='Y'&&!t.cut&&!t.done):(t.t==='B'&&t.n===S.detPick.hitVal&&!t.cut&&!t.done);if(_okk){el.classList.add('sel');el.onclick=()=>youDetPickOwn(i);}}
+        if(S.infoPlace&&S.infoPlace.opts&&S.infoPlace.opts.indexOf(i)>=0){el.classList.add('sel');el.onclick=()=>placeMissInfo(i);}
+        if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPlaceInfo(i);}
+        if(S.swapMode&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youSwapGive(i);}
+        if(S.labelMode){el.onclick=()=>youLabelSelect(i);if(S.labelSel.some(function(x){return x.i===i;}))el.classList.add('sel');}
+        if(S.turn===0&&!S.over&&act&&!S.pick&&!S.detPick&&!S.infoPlace&&!S.pickInfo&&!S.swapMode&&!S.labelMode){el.onclick=()=>youOwnSelect(i);if(S.ownSel===i)el.classList.add('sel');}
+      }else{
+        if(S.sel&&S.sel.pi===pi&&S.sel.i===i)el.classList.add('sel');
+        if(S.detMode&&S.detSel.some(function(x){return x.pi===pi&&x.i===i;}))el.classList.add('sel');
+        if(S.labelMode&&S.labelSel.some(function(x){return x.pi===pi&&x.i===i;}))el.classList.add('sel');
+        if(S.turn===0&&!S.over&&!t.cut&&!t.done)el.onclick=()=>youCutSelect(pi,i);
+      }
       el.insertAdjacentHTML('beforeend','<span class="lt">'+L(i)+'</span>');tw.appendChild(el);
-      if(active&&t.relRight)pendRel=t.relRight;});
-    seat.appendChild(tw);ow.appendChild(seat);});
+      if(t.relRight)pendRel=t.relRight;
+    });
+    seat.appendChild(tw);hw.appendChild(seat);
+  });
   // equip
   const ew=g('equip');ew.innerHTML='';
   if(S.equip.length===0){ew.innerHTML='<div class="muted">装備なし</div>';}
