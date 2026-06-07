@@ -35,9 +35,9 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .seat.active{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;}
 .seat .nm{font-weight:800;font-size:14px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;color:var(--ink);}
 .seat .nmL{display:flex;align-items:center;gap:7px;}
-.tiles{display:flex;flex-wrap:wrap;gap:5px;padding-top:13px;}
+.tiles{display:flex;flex-wrap:wrap;column-gap:5px;row-gap:18px;padding-top:14px;}
 /* --- wire tile (dark rail, friendly rounding) --- */
-.tile{position:relative;width:40px;height:56px;border-radius:9px;background:linear-gradient(#2c2f3a,#15171f);border:2px solid #0c0e16;box-shadow:0 2px 4px rgba(60,40,10,.30),inset 0 0 0 1px #3a3e4c;display:flex;align-items:center;justify-content:center;color:#fff;}
+.tile{position:relative;width:40px;height:56px;border-radius:9px;background:linear-gradient(#52a8ff,#2f86e6);border:2px solid #2470cf;box-shadow:0 2px 4px rgba(30,70,130,.30),inset 0 0 0 1px rgba(255,255,255,.20);display:flex;align-items:center;justify-content:center;color:#fff;}
 .tile .big{font-size:21px;font-weight:800;z-index:2;text-shadow:0 1px 2px #000;}
 .tile small{position:absolute;bottom:3px;font-size:14px;color:#fff;z-index:2;font-weight:800;text-shadow:0 1px 2px #000;line-height:1;}
 .tile.y .big{color:#ffd24a;}
@@ -53,13 +53,13 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .tk::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#ffffff;}
 .tk.yel{background:#ffce3a;width:15px;height:15px;padding:0;border-radius:4px;border-color:#e0a51a;}
 .tk.yel::after{border-top-color:#ffce3a;}
-.declare{background:#222c52;border:2px solid var(--blue);border-radius:14px;padding:11px;font-size:14px;line-height:1.55;margin-bottom:8px;color:#e9eefc;}
-.declare b{color:#ffd24a;}
+.declare{background:#fff7e3;border:2px solid var(--blue);border-radius:14px;padding:11px;font-size:14px;line-height:1.55;margin-bottom:8px;color:var(--ink);}
+.declare b{color:#c9820f;}
 .sect{border-top:2px dashed var(--line);margin-top:10px;padding-top:8px;}.sect .t{font-size:12px;color:#e8901a;font-weight:800;margin-bottom:4px;}
 .muted{color:var(--mut);font-size:12px;line-height:1.5;}.note{font-size:11px;color:var(--mut);margin-top:5px;line-height:1.45;}
-.log{font-size:13px;max-height:185px;overflow:auto;line-height:1.7;background:#222c52;border-radius:12px;padding:7px 10px;color:#d6deef;}
-.log div{padding:2px 0;border-bottom:1px solid #33406e;}
-.log .me{color:#ffd24a;}.log .bad{color:#ff9a9d;}.log .ok{color:#6ee2a0;}
+.log{font-size:13px;max-height:185px;overflow:auto;line-height:1.7;background:#fbf3df;border-radius:12px;padding:7px 10px;color:var(--text);}
+.log div{padding:2px 0;border-bottom:1px solid #ecd9b3;}
+.log .me{color:#c9820f;}.log .bad{color:#d6453f;}.log .ok{color:#1f9b54;}
 .hidden{display:none;}
 .banner{padding:14px;border-radius:16px;text-align:center;font-weight:800;font-size:18px;margin-bottom:12px;}
 .banner.win{background:#dcfbe7;border:2px solid var(--green);color:#1f9b54;}
@@ -77,8 +77,8 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .mk.r{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 34% 32%,#ff9a9a,#e23b41);}
 .mk.y{width:17px;height:7px;border-radius:2px;background:#ffce3a;}
 .mk.off{opacity:.2;}.mkspace{height:13px;}
-.mk.rq{width:23px;height:23px;border-radius:6px;border:2px solid var(--red);color:var(--red);font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#ffffff;}
-.mk.yq{width:24px;height:19px;border-radius:6px;border:2px solid #e0a51a;color:#cf8a00;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#fff8e2;}
+.mk.rq{width:23px;height:23px;border-radius:6px;border:2px solid #e0474c;color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;background:var(--red);}
+.mk.yq{width:24px;height:19px;border-radius:6px;border:2px solid #e0a51a;color:#6b4700;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#ffce3a;}
 .detstat{display:flex;justify-content:flex-end;margin-top:6px;}
 .detchip{font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;border:2px solid var(--line);background:#fff7e3;}
 .detchip.avail{color:#1f9b54;border-color:var(--green);}
@@ -111,8 +111,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
     <div><label>あなたの名前</label><input id="myName" value="りょうま"></div>
     <div><label>ミッション</label><select id="mission">
       <option value="4">#4 実地訓練1日目（赤1/黄2）</option>
-      <option value="8">#8 最終試験（赤1/黄2・簡略）</option>
-      <option value="R">ランダム（赤4-7/黄2-4）</option>
+      <option value="8">#8 最終試験(赤2本のうち1本/黄3本のうち2本)</option>
     </select></div>
   </div>
   <div class="row"><div><label>装備カードの枚数（人数ぶん＝4）</label><input id="equipN" type="number" value="4" inputmode="numeric"></div></div>
@@ -123,8 +122,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
   <div id="banner"></div>
   <div class="boardgrid">
     <div class="region-left">
-      <div class="card boardcard"><h2><span class="tag">ボード（位置トラック）</span> 残数・赤●・黄▮ <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2><div class="track" id="ledger"></div>
-        <div class="legend"><span><i class="dot" style="background:#c01b22;border-radius:50%"></i>●=赤</span><span><i class="dot" style="background:var(--gold)"></i>▮=黄</span><span>数字＝残り本数</span></div></div>
+      <div class="card boardcard"><h2><span class="tag">ボード（位置トラック）</span> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2><div class="track" id="ledger"></div></div>
       <div class="card"><h2><span class="tag">装備カード</span> 共有・1回使い切り</h2><div id="equip"></div>
         <div class="note">失敗帳消し＝残機+1／いつでもコーヒー＝選んだプレイヤーから再開／探知機・付箋＝番号を1枚公開。その他は手動適用で「使った」記録だけ。</div></div>
       <div class="card"><h2><span class="tag g">実況ログ</span> 誰が何を宣言したか</h2><div class="log" id="log"></div></div>
@@ -136,7 +134,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
       <div class="card"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
     </div>
     <div class="region-hand">
-      <div class="card"><h2><span class="tag">あなたの手札</span> 昇順</h2><div id="myhand"></div>
+      <div class="card"><h2><span class="tag">あなたの手札</span> <span id="myDet"></span> 昇順</h2><div id="myhand"></div>
         <div class="legend"><span>青=数字</span><span><i class="dot" style="background:var(--gold)"></i>黄</span><span><i class="dot" style="background:#c01b22;border-radius:50%"></i>赤</span><span>上のタグ＝情報トークン</span></div></div>
       <div class="card"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
     </div>
@@ -221,17 +219,17 @@ function decideMove(pi){
   if(!best){var dmf=null;for(var qi=0;qi<myNums.length;qi++){var _c=buildDetector(pi,myNums[qi]);if(_c&&(!dmf||_c._pc>dmf._pc))dmf=_c;}if(dmf)return dmf;
     if(mine.some(function(o){return o.t.t==='Y';})){var yb=null;S.players.forEach(function(p,p2){if(p2===pi)return;p.tiles.forEach(function(t,yi){if(t.cut||t.done||t.revealed)return;var yp=yProb(p2,yi);if(yp.pY<=0)return;if(!yb||yp.pY>yb.pY)yb={pi:p2,i:yi,pY:yp.pY,pR:yp.pR};});});if(yb)return{kind:'guessY',target:{pi:yb.pi,i:yb.i},text:'<span style="color:var(--gold)">黄</span>：'+me.name+'は '+S.players[yb.pi].name+' の'+(yb.i+1)+'番目を黄と読んで「黄」宣言（黄'+Math.round(yb.pY*100)+'%）。'};}
     var heldB=[...new Set(mine.filter(function(o){return o.t.t==='B';}).map(function(o){return o.t.n;}))];
-    if(heldB.length){var fb=null;S.players.forEach(function(p,p2){if(p2===pi)return;p.tiles.forEach(function(t,ii){if(t.cut||t.done||t.revealed)return;var rg=tileRange(p2,ii);heldB.forEach(function(n){var inR=(n>=rg.lo&&n<=rg.hi);var sc=inR?(hiddenRem(n)+1):-(Math.min(Math.abs(n-rg.lo),Math.abs(n-rg.hi)));if(!fb||sc>fb.sc)fb={pi:p2,i:ii,n:n,sc:sc};});});});if(fb)return{kind:'guess',n:fb.n,target:{pi:fb.pi,i:fb.i},text:'<span style="color:#ff8a8a">勝負</span>：'+me.name+'は確実な読みがないため、最も可能性の高い '+S.players[fb.pi].name+' の'+(fb.i+1)+'番目へ「'+fb.n+'」を宣言。'};}
+    if(heldB.length){var fb=null;S.players.forEach(function(p,p2){if(p2===pi)return;p.tiles.forEach(function(t,ii){if(t.cut||t.done||t.revealed)return;var rg=tileRange(p2,ii);heldB.forEach(function(n){var inR=(n>=rg.lo&&n<=rg.hi);var sc=inR?(hiddenRem(n)+1):-(Math.min(Math.abs(n-rg.lo),Math.abs(n-rg.hi)));if(!fb||sc>fb.sc)fb={pi:p2,i:ii,n:n,sc:sc};});});});if(fb)return{kind:'guess',n:fb.n,target:{pi:fb.pi,i:fb.i},text:'<span style="color:#d6453f">勝負</span>：'+me.name+'は確実な読みがないため、最も可能性の高い '+S.players[fb.pi].name+' の'+(fb.i+1)+'番目へ「'+fb.n+'」を宣言。'};}
     if(mine.some(function(o){return o.t.t==='R';}))return{kind:'revealAllRed',text:me.name+'は手がかりが尽きたため赤を公開して処理する。'};
     return{kind:'pass',text:me.name+'：打つ手なし（まれ）。'};}
   var thr=Math.min(0.85,0.42+skill*0.04);
   if(best.p>=thr)return{kind:'guess',n:best.n,target:{pi:best.pi,i:best.i},text:'<span style="color:var(--gold)">読み</span>：'+me.name+'は '+S.players[best.pi].name+' の'+(best.i+1)+'番目（範囲から'+best.n+'が濃厚 '+Math.round(best.p*100)+'%）に「'+best.n+'」。'};
   var dm=buildDetector(pi,best.n);if(dm)return dm;
   var ie=S.equip.findIndex(function(e){return !e.used&&e.kind==='ice'&&cutBlue(e.num)>=2;});
-  if(ie>=0)return{kind:'guess',n:best.n,target:{pi:best.pi,i:best.i},iceIdx:ie,text:'<span style="color:#9adfff">装備+読み</span>：'+me.name+'は「'+S.equip[ie].name+'」で安全に '+S.players[best.pi].name+' の'+(best.i+1)+'番目へ「'+best.n+'」。'};
+  if(ie>=0)return{kind:'guess',n:best.n,target:{pi:best.pi,i:best.i},iceIdx:ie,text:'<span style="color:#2c7fe0">装備+読み</span>：'+me.name+'は「'+S.equip[ie].name+'」で安全に '+S.players[best.pi].name+' の'+(best.i+1)+'番目へ「'+best.n+'」。'};
   var er=S.equip.findIndex(function(e){return !e.used&&e.kind==='reveal'&&cutBlue(e.num)>=2;});
   if(er>=0)return{kind:'equip',ei:er,n:best.n,text:'<span style="color:var(--blue)">装備</span>：'+me.name+'は自信が無いので「'+S.equip[er].name+'」で <b>'+best.n+'</b> を探る。'};
-  return{kind:'guess',n:best.n,target:{pi:best.pi,i:best.i},text:'<span style="color:#ff8a8a">勝負</span>：'+me.name+'は '+S.players[best.pi].name+' の'+(best.i+1)+'番目へ「'+best.n+'」（'+Math.round(best.p*100)+'%）。'};
+  return{kind:'guess',n:best.n,target:{pi:best.pi,i:best.i},text:'<span style="color:#d6453f">勝負</span>：'+me.name+'は '+S.players[best.pi].name+' の'+(best.i+1)+'番目へ「'+best.n+'」（'+Math.round(best.p*100)+'%）。'};
 }
 function resolveMove(mv,pi){
   const me=S.players[pi];
@@ -387,7 +385,7 @@ function render(){
   var pendRelM=null;
   me.tiles.forEach((t,idx)=>{const active=!t.cut&&!t.done;if(pendRelM){var rmm=document.createElement('div');rmm.className='rel '+(pendRelM==='='?'eq':'ne');rmm.textContent=pendRelM;mtw.appendChild(rmm);pendRelM=null;}const tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,true);const el=tmp.firstChild;if(S.pick&&t.t==='B'&&t.n===S.pick.n&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPickOwn(idx);}if(S.detPick){var _dt=S.players[0].tiles[idx];var _okk=(S.detPick.hitVal==='Y')?(_dt.t==='Y'&&!_dt.cut&&!_dt.done):(_dt.t==='B'&&_dt.n===S.detPick.hitVal&&!_dt.cut&&!_dt.done);if(_okk){el.classList.add('sel');el.onclick=()=>youDetPickOwn(idx);}}if(S.infoPlace&&t.t==='B'&&!t.cut&&!t.done&&!t.revealed){el.classList.add('sel');el.onclick=()=>placeMissInfo(idx);}if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPlaceInfo(idx);}if(S.swapMode&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youSwapGive(idx);}if(S.labelMode){el.onclick=()=>youLabelSelect(idx);if(S.labelSel.some(function(x){return x.i===idx;}))el.classList.add('sel');}mtw.appendChild(el);if(t.relRight)pendRelM=t.relRight;});
   mw.appendChild(mtw);
-  var ds0=document.createElement('div');ds0.className='detstat';ds0.innerHTML='<span class="detchip '+(S.players[0].detector?'avail':'used')+'">探知機 '+(S.players[0].detector?'●使用可':'✓使用済')+'</span>';mw.appendChild(ds0);
+  var _md=g('myDet');if(_md)_md.innerHTML='<span class="detchip '+(S.players[0].detector?'avail':'used')+'">探知機 '+(S.players[0].detector?'●使用可':'✓使用済')+'</span>';
   // others
   const ow=g('others');ow.innerHTML='';
   S.players.forEach((p,pi)=>{if(pi===0)return;const active=p.tiles.filter(t=>!t.cut&&!t.done).length;
@@ -417,3 +415,4 @@ function loadSaved(){try{const raw=localStorage.getItem('bb_solo4');if(!raw){ale
 
 </body>
 </html>
+                                              
