@@ -40,8 +40,8 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .tile{position:relative;width:40px;height:56px;border-radius:9px;background:linear-gradient(#52a8ff,#2f86e6);border:2px solid #2470cf;box-shadow:0 2px 4px rgba(30,70,130,.30),inset 0 0 0 1px rgba(255,255,255,.20);display:flex;align-items:center;justify-content:center;color:#fff;}
 .tile .big{font-size:21px;font-weight:800;z-index:2;text-shadow:0 1px 2px #000;}
 .tile small{position:absolute;bottom:3px;font-size:14px;color:#fff;z-index:2;font-weight:800;text-shadow:0 1px 2px #000;line-height:1;}
-.tile.y .big{color:#5e3d00;}.tile.y small{color:#5e3d00;text-shadow:none;}
-.tile.y{background:linear-gradient(#ffd54a,#f3b200);border-color:#dca200;}
+.tile.y .big{color:#fff;}.tile.y .big,.tile.r .big{font-size:17px;}
+.tile.y{background:linear-gradient(#ffc733,#f2a200);border-color:#dca200;}
 .tile.y .ysq{position:absolute;top:7px;width:15px;height:15px;border-radius:3px;background:#6b4700;z-index:2;}
 .tile.r{background:linear-gradient(#ff6f73,#e2484d);border-color:#c92d33;}
 .tile.r .bomb{position:absolute;top:7px;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 36% 34%,#5a1418,#2c0809);box-shadow:0 0 0 1px rgba(0,0,0,.15);z-index:2;}
@@ -134,8 +134,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
       <div class="card"><h2><span class="tag b">手番・コマンド</span></h2><div class="turnbar" id="turnbar"></div><div id="declareArea"></div></div>
     </div>
     <div class="region-hand">
-      <div class="card"><h2><span class="tag">あなたの手札</span> <span id="myDet"></span> 昇順</h2><div id="myhand"></div>
-        <div class="legend"><span>青=数字</span><span><i class="dot" style="background:var(--gold)"></i>黄</span><span><i class="dot" style="background:#c01b22;border-radius:50%"></i>赤</span><span>上のタグ＝情報トークン</span></div></div>
+      <div class="card"><h2><span class="tag">あなたの手札</span> <span id="myDet"></span> 昇順</h2><div id="myhand"></div></div>
       <div class="card"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
     </div>
   </div>
@@ -311,8 +310,8 @@ function tileHTML(t,shown){
   // info token only on blue/yellow (赤には情報トークンを置かない)
   const tk=(t.revealed&&t.t==='Y')?'<span class="tk yel"></span>':((t.revealed&&t.t==='B')?'<span class="tk">'+t.n+'</span>':'');
   if(t.t==='B')return '<div class="tile b'+cut+'" data-n="'+t.n+'">'+tk+'<span class="big">'+t.n+'</span></div>';
-  if(t.t==='Y')return '<div class="tile y'+cut+'">'+tk+'<span class="ysq"></span><small>'+t.n+'.1</small></div>';
-  return '<div class="tile r'+cut+'"><span class="bomb"></span><small>'+t.n+'.5</small></div>';
+  if(t.t==='Y')return '<div class="tile y'+cut+'">'+tk+'<span class="big">'+t.n+'.1</span></div>';
+  return '<div class="tile r'+cut+'"><span class="big">'+t.n+'.5</span></div>';
 }
 function render(){
   if(!S)return;
