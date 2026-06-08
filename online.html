@@ -190,7 +190,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
       <div id="declareArea"></div>
     </div>
     <div class="card logcard"><h2><span class="tag g">実況ログ</span></h2><div class="log" id="log"></div></div>
-    <div class="card ctrlcard"><div class="btnrow"><button class="ghost" onclick="leaveGame()">ロビーに戻る</button></div></div>
+    <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="doRestart()">最初から</button><button class="ghost" onclick="leaveGame()">ロビーに戻る</button></div></div>
   </div>
 </div>
 
@@ -267,7 +267,7 @@ function renderGame(){
   var ps=g('prioStrip');if(v.prio){var ph='<div class="prio"><span class="plabel">順番に切断</span>';v.prio.nums.forEach(function(nn,ii){var st=(ii<v.prio.ptr)?'done':(ii===v.prio.ptr?'cur':'lock');ph+='<span class="pchip '+st+'">'+L(ii).toLowerCase()+': <b>'+nn+'</b> '+(st==='done'?'✓':(st==='cur'?'◀今ここ':'🔒'))+'</span>';if(ii<2)ph+='<span class="parrow">→</span>';});ph+='</div>';ps.innerHTML=ph;}else ps.innerHTML='';
 
   // equipment (display only for now)
-  var ew=g('equip');ew.innerHTML='';if(v.equip.length){var er=document.createElement('div');er.className='btnrow';v.equip.forEach(function(e){var b=document.createElement('button');b.className='ghost';b.style.minWidth='130px';b.disabled=true;b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':'');er.appendChild(b);});ew.appendChild(er);}else ew.innerHTML='<div class="muted">装備なし</div>';
+  var ew=g('equip');ew.innerHTML='';if(v.equip.length){var er=document.createElement('div');er.className='btnrow';v.equip.forEach(function(e,ei){var unlocked=(e.kind==='himitsu')?(v.yCut>0):(cutCount(e.num)>=2);var usable=!e.used&&unlocked&&v.turn===MYSEAT&&!v.over&&!v.infoPhase;var b=document.createElement('button');b.className=usable?'sec':'ghost';b.style.minWidth='130px';b.disabled=!usable;b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':(unlocked?'':' 🔒'));b.onclick=(function(j){return function(){useEquipClient(j);};})(ei);er.appendChild(b);});ew.appendChild(er);}else ew.innerHTML='<div class="muted">装備なし</div>';
 
   // hands (captain first), own highlighted
   var hw=g('hands');hw.innerHTML='';
@@ -280,7 +280,8 @@ function renderGame(){
     var tw=document.createElement('div');tw.className='tiles';
     p.tiles.forEach(function(t,i){var shown=isYou||!t.masked;var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,shown);var el=tmp.firstChild;
       var act=!t.cut&&!t.done;
-      if(isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(j){return function(){tapOwn(j);};})(i);if(selOwn===i)el.classList.add('sel');}
+      if(v.infoPhase){ if(isYou&&v.youPlaceInfo&&t.t==='B'&&act&&!t.revealed){el.onclick=(function(j){return function(){placeInfoTap(j);};})(i);el.classList.add('sel');} }
+      else if(isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(j){return function(){tapOwn(j);};})(i);if(selOwn===i)el.classList.add('sel');}
       else if(!isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(pp,j){return function(){tapOpp(pp,j);};})(pi,i);
         if(selTarget&&selTarget.pi===pi&&selTarget.i===i)el.classList.add('sel');
         if(detMode&&detSel.some(function(x){return x.pi===pi&&x.i===i;}))el.classList.add('sel');}
@@ -289,7 +290,8 @@ function renderGame(){
 
   // action bar + status
   var ab=g('actionbar'),da=g('declareArea');
-  if(v.over){ab.innerHTML='';da.innerHTML='<div class="muted">ゲーム終了。</div>';}
+  if(v.infoPhase){ab.innerHTML='';da.innerHTML=v.youPlaceInfo?'<div class="declare" style="border-color:var(--green)">ゲーム開始：<b>情報トークンを置く自分の青コードを1枚タップ</b>してください。</div>':'<div class="declare">情報トークンを配置中… <b>'+v.players[v.turn].name+'</b> が選んでいます…</div>';}
+  else if(v.over){ab.innerHTML='';da.innerHTML='<div class="muted">ゲーム終了。</div><div class="btnrow"><button class="blue" onclick="doRestart()">もう一度遊ぶ（同じメンバー）</button></div>';}
   else if(v.turn===MYSEAT){
     var soloN=ownSoloNumber();
     ab.innerHTML='<div class="btnrow">'
@@ -313,6 +315,24 @@ function tapOwn(i){if(detMode){sendDetector(i);return;}selOwn=(selOwn===i)?null:
 function tapOpp(pi,i){if(detMode){if(detSel.length&&detSel[0].pi!==pi)detSel=[];if(!detSel.some(function(x){return x.pi===pi&&x.i===i;})&&detSel.length<2)detSel.push({pi:pi,i:i});renderGame();return;}selTarget={pi:pi,i:i};renderGame();}
 function toggleDet(){detMode=!detMode;detSel=[];renderGame();}
 
+function doRestart(){api('/api/room/'+CODE+'/restart','POST',{playerId:PID}).then(function(r){if(r.error)alert(r.error);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
+
+function letterIdx(x){if(x==null)return -1;x=(''+x).trim().toUpperCase();if(/^[A-Z]$/.test(x))return x.charCodeAt(0)-65;var n=parseInt(x);return isNaN(n)?-1:n-1;}
+function mateListStr(){return VIEW.players.map(function(p,i){return i+'='+p.name;}).join(' / ');}
+function matePrompt(label){var v=prompt(label+'（'+mateListStr()+'）。自分以外の番号');var i=parseInt(v);if(isNaN(i)||i===MYSEAT||i<0||i>=VIEW.players.length)return null;return i;}
+function useEquipClient(ei){var e=VIEW.equip[ei];if(!e||e.used)return;var k=e.kind;var p={};
+  if(k==='life'||k==='ice'||k==='himitsu'){}
+  else if(k==='reveal'){var n=prompt('公開する自分の青コードの番号(1-12)');p.n=parseInt(n);if(isNaN(p.n))return;}
+  else if(k==='radar'){var n=prompt('調べる番号(1-12)');p.n=parseInt(n);if(isNaN(p.n))return;}
+  else if(k==='extra'){var t=matePrompt('ゲームを再開するプレイヤー');if(t==null)return;p.target=t;}
+  else if(k==='battery'){var v2=prompt('探知機を回復するプレイヤー番号（カンマ区切り・最大2人）。'+mateListStr());if(v2==null)return;p.targets=v2.split(/[ ,、]+/).map(function(x){return parseInt(x);}).filter(function(x){return !isNaN(x);});}
+  else if(k==='super'){var t=matePrompt('対象の仲間');if(t==null)return;var n=prompt('宣言する数値(1-12)。相手の手札全体が対象、あれば1枚切断');p.target=t;p.n=parseInt(n);if(isNaN(p.n))return;}
+  else if(k==='swap'){var t=matePrompt('渡す相手');if(t==null)return;var g=prompt('渡す自分のコードの位置（A,B,C…）');p.target=t;p.give=letterIdx(g);if(p.give<0)return;}
+  else if(k==='kotonal'||k==='equal'){var s2=prompt((k==='equal'?'イコール（同じ2本）':'コトナル（違う2本）')+'：自分の隣り合う2本の位置（例 A,B）');if(!s2)return;var arr=s2.split(/[ ,、]+/).map(letterIdx).filter(function(x){return x>=0;});if(arr.length!==2){alert('2本を指定してね');return;}p.tiles=arr;}
+  else if(k==='mitsu'){var t=matePrompt('対象の仲間');if(t==null)return;var s3=prompt('相手のコード3本の位置（例 A,B,C）');var n=prompt('宣言する数値(1-12)');p.targetPi=t;p.idxs=(s3||'').split(/[ ,、]+/).map(letterIdx).filter(function(x){return x>=0;});p.decls=[parseInt(n)];}
+  else if(k==='dochi'){var t=matePrompt('対象の仲間');if(t==null)return;var s4=prompt('相手のコード1本の位置（例 A）');var n=prompt('宣言する数値を2つ（例 3,黄）');p.targetPi=t;p.idxs=(s4||'').split(/[ ,、]+/).map(letterIdx).filter(function(x){return x>=0;});p.decls=(n||'').split(/[ ,、]+/).map(function(x){x=x.trim();return (x==='黄'||x.toUpperCase()==='Y')?'Y':parseInt(x);});}
+  act({kind:'useEquip',ei:ei,params:p});}
+function placeInfoTap(i){act({kind:'placeInfo',idx:i});}
 function act(move){return api('/api/room/'+CODE+'/action','POST',{playerId:PID,move:move}).then(function(r){if(!r.ok&&r.err)alert(r.err);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
 function doCut2(){if(!selTarget||selOwn==null){alert('相手と自分の手札を1枚ずつタップしてね');return;}var t=VIEW.players[MYSEAT].tiles[selOwn];if(t.t==='Y')act({kind:'guessY',target:selTarget});else act({kind:'guess',n:t.n,target:selTarget});}
 function doCut1(){var s=ownSoloNumber();if(s==null){alert('単独で切れる自分の手札を選んでね');return;}if(s==='Y')act({kind:'soloY'});else act({kind:'solo',n:s});}
