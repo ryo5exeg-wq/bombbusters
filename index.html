@@ -336,10 +336,15 @@ function useEquip(i){if(S.pickInfo)return;const e=S.equip[i];if(e.used||S.over)r
   else{e.used=true;pushLog('装備「'+e.name+'」：効果はカード文どおり手動適用（使用済みに）。');}
   checkEnd();render();saveGame();
 }
-function tileHTML(t,shown){
-  if(!shown)return '<div class="tile back"></div>';
+function tileHTML(t,isYou,showAll){
+  // teammate hidden code (not revealed, not cut): face-down
+  if(!isYou&&!showAll&&!t.revealed&&!t.cut&&!t.done)return '<div class="tile back"></div>';
+  // teammate code with an info token (revealed, not cut): stay FACE-DOWN, number shown on the token
+  if(!isYou&&!showAll&&t.revealed&&!t.cut&&!t.done){
+    if(t.t==='Y')return '<div class="tile back"><span class="tk yel"></span></div>';
+    return '<div class="tile back"><span class="tk">'+t.n+'</span></div>';
+  }
   const cut=(t.cut||t.done)?' cut':'';
-  // info token only on blue/yellow (赤には情報トークンを置かない)
   const tk=(t.revealed&&t.t==='Y')?'<span class="tk yel"></span>':((t.revealed&&t.t==='B')?'<span class="tk">'+t.n+'</span>':'');
   if(t.t==='B')return '<div class="tile b'+cut+'" data-n="'+t.n+'">'+tk+'<span class="big">'+t.n+'</span></div>';
   if(t.t==='Y')return '<div class="tile y'+cut+'">'+tk+'<span class="big">'+t.n+'.1</span></div>';
@@ -409,8 +414,7 @@ function render(){
     var tw=document.createElement('div');tw.className='tiles';var pendRel=null;
     p.tiles.forEach(function(t,i){var act=!t.cut&&!t.done;
       if(pendRel){var rmk=document.createElement('div');rmk.className='rel '+(pendRel==='='?'eq':'ne');rmk.textContent=pendRel;tw.appendChild(rmk);pendRel=null;}
-      var shown=isYou?true:(t.revealed||t.cut||t.done||S.showAll);
-      var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,shown);var el=tmp.firstChild;
+      var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,isYou,S.showAll);var el=tmp.firstChild;
       if(isYou){
         if(S.pick&&t.t==='B'&&t.n===S.pick.n&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPickOwn(i);}
         if(S.detPick){var _okk=(S.detPick.hitVal==='Y')?(t.t==='Y'&&!t.cut&&!t.done):(t.t==='B'&&t.n===S.detPick.hitVal&&!t.cut&&!t.done);if(_okk){el.classList.add('sel');el.onclick=()=>youDetPickOwn(i);}}
