@@ -116,6 +116,13 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
   .sidetitle{display:block;position:fixed;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-family:"Arial Black",Arial,Helvetica,sans-serif;font-weight:900;font-size:42px;line-height:1;letter-spacing:3px;color:var(--red);opacity:.95;pointer-events:none;z-index:5;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(160,95,20,.22);white-space:nowrap;}
   .sidetitle.left{left:6px;}.sidetitle.right{right:6px;}
 }
+.eqbox{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:16px;max-width:430px;width:92%;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+#eqmodal{position:fixed;inset:0;background:rgba(40,30,10,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+#eqmodal.hidden{display:none;}
+.eqtitle{font-weight:800;color:var(--ink);margin-bottom:10px;font-size:15px;}
+.eqsec{margin:8px 0;}.eqsec .lbl{font-size:12px;color:var(--mut);margin-bottom:4px;}
+.eqchoices{display:flex;flex-wrap:wrap;gap:6px;}.eqchoices button{min-width:46px;}
+.eqchoices button.on{background:var(--gold);color:#fff;box-shadow:0 3px 0 #c9820f;}
 </style>
 </head>
 <body>
@@ -157,6 +164,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
     <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
   </div>
 </div>
+<div id="eqmodal" class="hidden"><div class="eqbox"><div id="eqtitle" class="eqtitle"></div><div id="eqbody"></div><div class="btnrow" id="eqfoot"></div></div></div>
 <script>
 let S=null;
 const VN=['ケン','アオイ','ユメ','リク'];
@@ -320,18 +328,46 @@ function youPlaceInfo(idx){if(!S.pickInfo)return;var t=S.players[0].tiles[idx];i
 function youSolo(n){if(S.pickInfo)return;if(prioLocked(n)){alert('「'+n+'」はまだ切断できません（優先順位）');return;}S.passStreak=0;const t=S.players[0].tiles.filter(x=>x.t==='B'&&x.n===n&&!x.cut);if(t.length<2||t.length!==(4-cutBlue(n))){alert('単独切断は「その数字の残り全部を自分が持つ」ときだけ');return;}t.forEach(x=>x.cut=true);recomputeCuts();pushLog('<b>あなた</b>：単独切断 '+n+' → '+t.length+'本切断。','me');checkEnd();nextTurn();}
 function youSoloYellow(){if(S.pickInfo)return;S.passStreak=0;var mine=S.players[0].tiles.filter(function(t){return t.t==='Y'&&!t.cut&&!t.done;});var total=0;S.players.forEach(function(p){p.tiles.forEach(function(t){if(t.t==='Y'&&!t.cut&&!t.done)total++;});});if(mine.length<2||mine.length!==total){alert('黄の単独切断は「残りの黄を全部自分が持つ（2枚以上）」ときだけ');return;}var c=0;mine.forEach(function(t){t.cut=true;c++;});S.yCut+=c;pushLog('<b>あなた</b>：黄を単独で切断 → '+c+'本切断。','me');checkEnd();nextTurn();}
 function youRevealRed(){if(S.pickInfo)return;const act=S.players[0].tiles.filter(t=>!t.cut&&!t.done);if(!act.length||!act.every(t=>t.t==='R')){alert('赤の公開は「手札が赤のみ」になったときだけできます');return;}let c=0;act.forEach(t=>{t.done=true;t.revealed=true;S.redDone++;c++;});pushLog('<b>あなた</b>：手札が赤のみ → 赤'+c+'本をすべて公開（無力化）。','me');checkEnd();nextTurn();}
+var modal=null;
+function smates(){var a=[];S.players.forEach(function(p,i){if(i!==0)a.push(i);});return a;}
+function openEquipModal(i){var e=S.equip[i];modal={ei:i,kind:e.kind,target:null,n:null,targets:[],give:null};renderModal();g('eqmodal').classList.remove('hidden');}
+function closeModal(){modal=null;var m=g('eqmodal');if(m)m.classList.add('hidden');}
+function pBtns(field,multi,list){return list.map(function(i){var on=multi?(modal.targets.indexOf(i)>=0):(modal[field]===i);return '<button class="'+(on?'on':'sec')+'" onclick="modalPick(\''+field+'\','+i+')">'+S.players[i].name+'</button>';}).join('')||'<span class="muted">対象なし</span>';}
+function nBtns(){var h='';for(var n=1;n<=12;n++)h+='<button class="'+(modal.n===n?'on':'sec')+'" onclick="modalNum('+n+')">'+n+'</button>';return h;}
+function giveBtns(){var me=S.players[0];return me.tiles.map(function(t,i){if(t.cut||t.done)return '';var lbl=L(i)+(t.t==='B'?'('+t.n+')':(t.t==='Y'?'(黄)':'(赤)'));return '<button class="'+(modal.give===i?'on':'sec')+'" onclick="modalGive('+i+')">'+lbl+'</button>';}).join('');}
+function renderModal(){if(!modal)return;var k=modal.kind,e=S.equip[modal.ei],title='',body='',foot='';
+  if(k==='radar'){title=e.name+'：調べる番号を選択';body='<div class="eqsec"><div class="eqchoices">'+nBtns()+'</div></div>';}
+  else if(k==='extra'){title=e.name+'：再開するプレイヤーを選択';body='<div class="eqsec"><div class="eqchoices">'+pBtns('target',false,smates())+'</div></div>';}
+  else if(k==='battery'){var ub=[];S.players.forEach(function(p,i){if(!p.detector)ub.push(i);});title=e.name+'：回復する仲間（最大2人）';body='<div class="eqsec"><div class="lbl">探知機を使ったプレイヤー</div><div class="eqchoices">'+pBtns('targets',true,ub)+'</div></div>';foot='<button class="blue" onclick="modalGo()">実行</button>';}
+  else if(k==='super'){title=e.name+'：対象と数字を選択';body='<div class="eqsec"><div class="lbl">対象の仲間</div><div class="eqchoices">'+pBtns('target',false,smates())+'</div></div><div class="eqsec"><div class="lbl">宣言する数字（自分が持つ番号）</div><div class="eqchoices">'+nBtns()+'</div></div>';foot='<button class="blue" onclick="modalGo()">実行</button>';}
+  else if(k==='swap'){title=e.name+'：相手と渡す自分のコード';body='<div class="eqsec"><div class="lbl">渡す相手</div><div class="eqchoices">'+pBtns('target',false,smates())+'</div></div><div class="eqsec"><div class="lbl">渡す自分のコード</div><div class="eqchoices">'+giveBtns()+'</div></div>';foot='<button class="blue" onclick="modalGo()">実行</button>';}
+  g('eqtitle').innerHTML=title;g('eqbody').innerHTML=body;g('eqfoot').innerHTML=foot+'<button class="ghost" onclick="closeModal()">取消</button>';}
+function modalPick(field,i){if(field==='targets'){var q=modal.targets.indexOf(i);if(q>=0)modal.targets.splice(q,1);else if(modal.targets.length<2)modal.targets.push(i);}else{modal[field]=i;}renderModal();if(modal.kind==='extra'&&modal.target!=null)modalGo();}
+function modalNum(n){modal.n=n;renderModal();if(modal.kind==='radar')modalGo();}
+function modalGive(i){modal.give=i;renderModal();}
+function modalGo(){if(!modal)return;var k=modal.kind,ei=modal.ei,tgt=modal.target,n=modal.n,tgts=modal.targets.slice(),give=modal.give;
+  if(k==='radar'){if(n==null)return;closeModal();soloRadar(ei,n);}
+  else if(k==='extra'){if(tgt==null)return;closeModal();soloCoffee(ei,tgt);}
+  else if(k==='battery'){if(tgts.length===0){alert('回復する仲間を選んでね');return;}closeModal();soloBattery(ei,tgts);}
+  else if(k==='super'){if(tgt==null||n==null){alert('対象と数字を選んでね');return;}closeModal();soloSuper(ei,tgt,n);}
+  else if(k==='swap'){if(tgt==null||give==null){alert('相手と渡すコードを選んでね');return;}closeModal();soloSwap(ei,tgt,give);}}
+function soloRadar(i,rn){var e=S.equip[i];var hold=[];S.players.forEach(function(p){if(p.tiles.some(function(t){return t.t==='B'&&t.n===rn&&!t.cut&&!t.done;}))hold.push(p.name);});e.used=true;pushLog('装備「'+e.name+'」：番号'+rn+' を持っているのは → '+(hold.length?hold.join('、'):'いない')+'。','ok');checkEnd();render();saveGame();}
+function soloCoffee(i,cp){var e=S.equip[i];e.used=true;S.sel=null;S.iceShield=false;S.turn=cp;pushLog('装備「'+e.name+'」：'+S.players[cp].name+' からゲームを再開します。','me');S._pending=(!S.over&&S.turn!==0)?decideMove(S.turn):null;checkEnd();render();saveGame();scheduleAuto();}
+function soloBattery(i,bsel){var e=S.equip[i];bsel.forEach(function(bi){S.players[bi].detector=true;});e.used=true;pushLog('装備「非常電池」：'+bsel.map(function(bi){return S.players[bi].name;}).join('・')+' の探知機の使用権を回復。','ok');checkEnd();render();saveGame();}
+function soloSuper(i,tp,sn){var e=S.equip[i];if(!S.players[0].tiles.some(function(t){return t.t==='B'&&t.n===sn&&!t.cut&&!t.done;})){alert('合わせる'+sn+'が自分の手札にありません');return;}var DP=S.players[tp];var sidxs=[];DP.tiles.forEach(function(t,ii){if(!t.cut&&!t.done)sidxs.push(ii);});var shit=DP.tiles.find(function(t){return t.t==='B'&&t.n===sn&&!t.cut&&!t.done;});if(shit){var scand=S.players[0].tiles.filter(function(t){return t.t==='B'&&t.n===sn&&!t.cut&&!t.done;}).length;if(scand>1){S.detPick={tpi:tp,hitIdx:DP.tiles.indexOf(shit),hitVal:sn,idxCount:sidxs.length,idxs:sidxs.slice(),equipIdx:i};render();return;}}detectorResolve(0,tp,sidxs,[sn]);e.used=true;checkEnd();nextTurn();}
+function soloSwap(i,sp,gi){S.swapMode=true;S.swapTarget=sp;S.swapEquipIdx=i;youSwapGive(gi);}
 function useEquip(i){if(S.pickInfo)return;const e=S.equip[i];if(e.used||S.over)return;if(e.kind==='himitsu'){if(S.yCut<=0){alert('ヒミツ底は黄コードを切断すると使えます');return;}var hpool=[1,2,3,4,5,6,7,8,9,10,11,12].filter(function(id){return !S.equip.some(function(x){return x.num===id;});});if(hpool.length<2){alert('追加できる装備が残っていません');return;}var hadd=[];for(var ha=0;ha<2&&hpool.length;ha++){hadd.push(hpool.splice(Math.floor(Math.random()*hpool.length),1)[0]);}hadd.forEach(function(id){S.equip.push({id:id,name:EQUIP[id].name,kind:EQUIP[id].kind,used:false,num:id});});S.equip.sort(function(x,y){return x.num-y.num;});e.used=true;pushLog('装備「ヒミツ底」：新たな装備「'+hadd.map(function(id){return EQUIP[id].name;}).join('」「')+'」を盤面に追加。','ok');checkEnd();render();saveGame();return;}if(cutBlue(e.num)<2){alert('この装備は対応する数字 '+e.num+' のペアが1組切られると使えます');return;}
-  if(e.kind==='radar'){var rv=prompt('特定したい数値(1-12)：その数字を持つ人を特定');var rn=parseInt(rv);if(isNaN(rn))return;var hold=[];S.players.forEach(function(p){if(p.tiles.some(function(t){return t.t==='B'&&t.n===rn&&!t.cut&&!t.done;}))hold.push(p.name);});e.used=true;pushLog('装備「'+e.name+'」：番号'+rn+' を持っているのは → '+(hold.length?hold.join('、'):'いない')+'。','ok');checkEnd();render();saveGame();return;}
-  if(e.kind==='super'){if(S.turn!==0){alert('スーパー探知機はあなたの手番に使います');return;}var tv=prompt('対象の仲間（'+mateList()+'）');var tp=parseInt(tv);if(!isMate(tp))return;var nv=prompt('宣言する数値(1-12)。相手の手札全体が対象、あれば1枚切断');var sn=parseInt(nv);if(isNaN(sn)||sn<1||sn>12)return;if(!S.players[0].tiles.some(function(t){return t.t==='B'&&t.n===sn&&!t.cut&&!t.done;})){alert('合わせる'+sn+'が自分の手札にありません');return;}var DP=S.players[tp];var sidxs=[];DP.tiles.forEach(function(t,ii){if(!t.cut&&!t.done)sidxs.push(ii);});var shit=DP.tiles.find(function(t){return t.t==='B'&&t.n===sn&&!t.cut&&!t.done;});if(shit){var scand=S.players[0].tiles.filter(function(t){return t.t==='B'&&t.n===sn&&!t.cut&&!t.done;}).length;if(scand>1){S.detPick={tpi:tp,hitIdx:DP.tiles.indexOf(shit),hitVal:sn,idxCount:sidxs.length,idxs:sidxs.slice(),equipIdx:i};render();return;}}detectorResolve(0,tp,sidxs,[sn]);e.used=true;checkEnd();nextTurn();return;}
+  if(e.kind==='radar'){openEquipModal(i);return;}
+  if(e.kind==='super'){if(S.turn!==0){alert('スーパー探知機はあなたの手番に使います');return;}openEquipModal(i);return;}
   if(e.kind==='mitsu'){if(S.turn!==0){alert('ミッツケル探知機はあなたの手番に使います');return;}startEquipDetector('mitsu',i);return;}
   if(e.kind==='dochi'){if(S.turn!==0){alert('ドッチカアタ・レイはあなたの手番に使います');return;}startEquipDetector('dochi',i);return;}
   if(e.kind==='kotonal'){if(S.turn!==0){alert('コトナルラベルはあなたの手番で使ってください');return;}startLabel('kotonal',i);return;}
   if(e.kind==='equal'){if(S.turn!==0){alert('イコールラベルはあなたの手番で使ってください');return;}startLabel('equal',i);return;}
-  if(e.kind==='battery'){var usedIdx=[];S.players.forEach(function(p,bi){if(!p.detector)usedIdx.push(bi);});if(usedIdx.length===0){alert('探知機を使ったプレイヤーがいないため回復できません');return;}var names=usedIdx.map(function(bi){return bi+'='+S.players[bi].name;}).join(' / ');var bv=prompt('探知機を回復するプレイヤーを選択（最大2人・カンマ区切り）。使用済み：'+names);if(bv==null)return;var bsel=[];bv.split(/[ ,、\s]+/).forEach(function(x){var pn=parseInt(x);if(usedIdx.indexOf(pn)>=0&&bsel.indexOf(pn)<0)bsel.push(pn);});bsel=bsel.slice(0,2);if(bsel.length===0){alert('使用済みのプレイヤー番号を入力してください');return;}bsel.forEach(function(bi){S.players[bi].detector=true;});e.used=true;pushLog('装備「非常電池」：'+bsel.map(function(bi){return S.players[bi].name;}).join('・')+' の探知機の使用権を回復。','ok');checkEnd();render();saveGame();return;}
+  if(e.kind==='battery'){var ub0=[];S.players.forEach(function(p,bi){if(!p.detector)ub0.push(bi);});if(ub0.length===0){alert('探知機を使ったプレイヤーがいないため回復できません');return;}openEquipModal(i);return;}
   if(e.kind==='ice'){if(S.turn!==0){alert('万能氷は自分の手番（行動の前）に使います');return;}S.iceShield=true;e.used=true;pushLog('装備「'+e.name+'」：この手番の失敗ペナルティを無効化（赤でも爆発しない・残機維持）。','ok');checkEnd();render();saveGame();return;}
-  if(e.kind==='swap'){if(S.turn!==0){alert('入れ替えはあなたの手番で使ってください');return;}var sv=prompt('渡す相手（'+mateList()+'）');var sp=parseInt(sv);if(!isMate(sp))return;S.swapMode=true;S.swapTarget=sp;S.swapEquipIdx=i;render();return;}
+  if(e.kind==='swap'){if(S.turn!==0){alert('入れ替えはあなたの手番で使ってください');return;}openEquipModal(i);return;}
   if(e.kind==='life'){S.lives=(S.lives+1);e.used=true;pushLog('装備「'+e.name+'」：残機+1。','ok');}
-  else if(e.kind==='extra'){if(S.turn!==0){alert('いつでもコーヒーはあなたの手番に使います');return;}var cv=prompt('ゲームを再開するプレイヤーを選択（'+mateList()+'）');var cp=parseInt(cv);if(!isMate(cp))return;e.used=true;S.sel=null;S.iceShield=false;S.turn=cp;pushLog('装備「'+e.name+'」：'+S.players[cp].name+' からゲームを再開します。','me');S._pending=(!S.over&&S.turn!==0)?decideMove(S.turn):null;checkEnd();render();saveGame();scheduleAuto();return;}
+  else if(e.kind==='extra'){if(S.turn!==0){alert('いつでもコーヒーはあなたの手番に使います');return;}openEquipModal(i);return;}
   else if(e.kind==='reveal'){const v=prompt('自分の手札で公開する番号(1-12)：自分のその青を1枚オモテに（仲間へのヒント）');const n=parseInt(v);if(isNaN(n))return;var P0=S.players[0];var f=P0.tiles.find(function(t){return t.t==='B'&&t.n===n&&!t.cut&&!t.done&&!t.revealed;});if(f){f.revealed=true;e.used=true;pushLog('装備「'+e.name+'」：自分の '+n+' を1枚公開（仲間へのヒント）。','ok');}else{alert('その番号の自分の青い伏せ札が見つかりません');return;}}
   else{e.used=true;pushLog('装備「'+e.name+'」：効果はカード文どおり手動適用（使用済みに）。');}
   checkEnd();render();saveGame();
