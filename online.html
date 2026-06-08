@@ -235,10 +235,15 @@ function renderWaiting(){
 }
 
 /* ---------- game render (from server view) ---------- */
-function tileHTML(t,shown){
-  if(!shown||t.masked) return '<div class="tile back"></div>';
+function tileHTML(t,isYou){
+  if(t.masked) return '<div class="tile back"></div>';
+  // teammate code with an info token (revealed, not cut): stay FACE-DOWN, show number on the token
+  if(!isYou && t.revealed && !t.cut && !t.done){
+    if(t.t==='Y') return '<div class="tile back"><span class="tk yel"></span></div>';
+    return '<div class="tile back"><span class="tk">'+t.n+'</span></div>';
+  }
   var cut=(t.cut||t.done)?' cut':'';
-  var tk=(t.revealed&&t.t==='Y')?'<span class="tk yel"></span>':((t.revealed&&t.t==='B')?'<span class="tk">'+t.n+'</span>':'');
+  var tk=(isYou&&t.revealed&&t.t==='Y')?'<span class="tk yel"></span>':((isYou&&t.revealed&&t.t==='B')?'<span class="tk">'+t.n+'</span>':'');
   if(t.t==='B') return '<div class="tile b'+cut+'">'+tk+'<span class="big">'+t.n+'</span></div>';
   if(t.t==='Y') return '<div class="tile y'+cut+'">'+tk+'<span class="big">'+t.n+'.1</span></div>';
   return '<div class="tile r'+cut+'"><span class="big">'+t.n+'.5</span></div>';
@@ -278,7 +283,7 @@ function renderGame(){
     var det='<span class="detchip '+(p.detector?'avail':'used')+'">探知機 '+(p.detector?'●使用可':'✓使用済')+'</span>';
     seat.innerHTML='<div class="nm"><span class="nmL">'+cap+(isYou?('あなた（'+p.name+'）'):p.name)+det+'</span><span class="muted">残り'+active+'</span></div>';
     var tw=document.createElement('div');tw.className='tiles';
-    p.tiles.forEach(function(t,i){var shown=isYou||!t.masked;var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,shown);var el=tmp.firstChild;
+    p.tiles.forEach(function(t,i){var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,isYou);var el=tmp.firstChild;
       var act=!t.cut&&!t.done;
       if(v.infoPhase){ if(isYou&&v.youPlaceInfo&&t.t==='B'&&act&&!t.revealed){el.onclick=(function(j){return function(){placeInfoTap(j);};})(i);el.classList.add('sel');} }
       else if(isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(j){return function(){tapOwn(j);};})(i);if(selOwn===i)el.classList.add('sel');}
