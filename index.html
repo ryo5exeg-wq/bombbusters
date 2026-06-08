@@ -123,6 +123,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 .eqsec{margin:8px 0;}.eqsec .lbl{font-size:12px;color:var(--mut);margin-bottom:4px;}
 .eqchoices{display:flex;flex-wrap:wrap;gap:6px;}.eqchoices button{min-width:46px;}
 .eqchoices button.on{background:var(--gold);color:#fff;box-shadow:0 3px 0 #c9820f;}
+.eqchoices button.dim{opacity:.32;}
 </style>
 </head>
 <body>
@@ -333,7 +334,8 @@ function smates(){var a=[];S.players.forEach(function(p,i){if(i!==0)a.push(i);})
 function openEquipModal(i){var e=S.equip[i];modal={ei:i,kind:e.kind,target:null,n:null,targets:[],give:null};renderModal();g('eqmodal').classList.remove('hidden');}
 function closeModal(){modal=null;var m=g('eqmodal');if(m)m.classList.add('hidden');}
 function pBtns(field,multi,list){return list.map(function(i){var on=multi?(modal.targets.indexOf(i)>=0):(modal[field]===i);return '<button class="'+(on?'on':'sec')+'" onclick="modalPick(\''+field+'\','+i+')">'+S.players[i].name+'</button>';}).join('')||'<span class="muted">対象なし</span>';}
-function nBtns(){var h='';for(var n=1;n<=12;n++)h+='<button class="'+(modal.n===n?'on':'sec')+'" onclick="modalNum('+n+')">'+n+'</button>';return h;}
+function nBtns(validFn){var h='';for(var n=1;n<=12;n++){var ok=validFn?validFn(n):true;h+='<button class="'+(modal.n===n?'on':(ok?'sec':'sec dim'))+'" '+(ok?'':'disabled')+' onclick="modalNum('+n+')">'+n+'</button>';}return h;}
+function holdNum(n){return S.players[0].tiles.some(function(t){return t.t==='B'&&t.n===n&&!t.cut&&!t.done;});}
 function giveBtns(){var me=S.players[0];return me.tiles.map(function(t,i){if(t.cut||t.done)return '';var lbl=L(i)+(t.t==='B'?'('+t.n+')':(t.t==='Y'?'(黄)':'(赤)'));return '<button class="'+(modal.give===i?'on':'sec')+'" onclick="modalGive('+i+')">'+lbl+'</button>';}).join('');}
 function renderModal(){if(!modal)return;var k=modal.kind,e=S.equip[modal.ei],title='',body='',foot='';
   if(k==='radar'){title=e.name+'：調べる番号を選択';body='<div class="eqsec"><div class="eqchoices">'+nBtns()+'</div></div>';}
