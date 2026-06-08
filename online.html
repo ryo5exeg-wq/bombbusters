@@ -285,7 +285,8 @@ function renderGame(){
     var tw=document.createElement('div');tw.className='tiles';
     p.tiles.forEach(function(t,i){var tmp=document.createElement('div');tmp.innerHTML=tileHTML(t,isYou);var el=tmp.firstChild;
       var act=!t.cut&&!t.done;
-      if(v.infoPhase){ if(isYou&&v.youPlaceInfo&&t.t==='B'&&act&&!t.revealed){el.onclick=(function(j){return function(){placeInfoTap(j);};})(i);el.classList.add('sel');} }
+      if(v.youPlaceMissInfo){ if(isYou&&v.missOpts&&v.missOpts.indexOf(i)>=0){el.onclick=(function(j){return function(){placeMissInfoTap(j);};})(i);el.classList.add('sel');} }
+      else if(v.infoPhase){ if(isYou&&v.youPlaceInfo&&t.t==='B'&&act&&!t.revealed){el.onclick=(function(j){return function(){placeInfoTap(j);};})(i);el.classList.add('sel');} }
       else if(isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(j){return function(){tapOwn(j);};})(i);if(selOwn===i)el.classList.add('sel');}
       else if(!isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(pp,j){return function(){tapOpp(pp,j);};})(pi,i);
         if(selTarget&&selTarget.pi===pi&&selTarget.i===i)el.classList.add('sel');
@@ -295,7 +296,9 @@ function renderGame(){
 
   // action bar + status
   var ab=g('actionbar'),da=g('declareArea');
-  if(v.infoPhase){ab.innerHTML='';da.innerHTML=v.youPlaceInfo?'<div class="declare" style="border-color:var(--green)">ゲーム開始：<b>情報トークンを置く自分の青コードを1枚タップ</b>してください。</div>':'<div class="declare">情報トークンを配置中… <b>'+v.players[v.turn].name+'</b> が選んでいます…</div>';}
+  if(v.youPlaceMissInfo){ab.innerHTML='';da.innerHTML='<div class="declare" style="border-color:var(--gold)">探知が外れました。<b>対象になった自分のコードを1枚タップ</b>して情報トークンを置いてください。</div>';}
+  else if(v.missInfoPending){ab.innerHTML='';da.innerHTML='<div class="declare"><b>'+v.missInfoName+'</b> が情報トークンを置いています…</div>';}
+  else if(v.infoPhase){ab.innerHTML='';da.innerHTML=v.youPlaceInfo?'<div class="declare" style="border-color:var(--green)">ゲーム開始：<b>情報トークンを置く自分の青コードを1枚タップ</b>してください。</div>':'<div class="declare">情報トークンを配置中… <b>'+v.players[v.turn].name+'</b> が選んでいます…</div>';}
   else if(v.over){ab.innerHTML='';da.innerHTML='<div class="muted">ゲーム終了。</div><div class="btnrow"><button class="blue" onclick="doRestart()">もう一度遊ぶ（同じメンバー）</button></div>';}
   else if(v.turn===MYSEAT){
     var soloN=ownSoloNumber();
@@ -338,6 +341,7 @@ function useEquipClient(ei){var e=VIEW.equip[ei];if(!e||e.used)return;var k=e.ki
   else if(k==='dochi'){var t=matePrompt('対象の仲間');if(t==null)return;var s4=prompt('相手のコード1本の位置（例 A）');var n=prompt('宣言する数値を2つ（例 3,黄）');p.targetPi=t;p.idxs=(s4||'').split(/[ ,、]+/).map(letterIdx).filter(function(x){return x>=0;});p.decls=(n||'').split(/[ ,、]+/).map(function(x){x=x.trim();return (x==='黄'||x.toUpperCase()==='Y')?'Y':parseInt(x);});}
   act({kind:'useEquip',ei:ei,params:p});}
 function placeInfoTap(i){act({kind:'placeInfo',idx:i});}
+function placeMissInfoTap(i){act({kind:'placeMissInfo',idx:i});}
 function act(move){return api('/api/room/'+CODE+'/action','POST',{playerId:PID,move:move}).then(function(r){if(!r.ok&&r.err)alert(r.err);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
 function doCut2(){if(!selTarget||selOwn==null){alert('相手と自分の手札を1枚ずつタップしてね');return;}var t=VIEW.players[MYSEAT].tiles[selOwn];if(t.t==='Y')act({kind:'guessY',target:selTarget});else act({kind:'guess',n:t.n,target:selTarget});}
 function doCut1(){var s=ownSoloNumber();if(s==null){alert('単独で切れる自分の手札を選んでね');return;}if(s==='Y')act({kind:'soloY'});else act({kind:'solo',n:s});}
