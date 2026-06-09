@@ -165,6 +165,8 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
         <option value="4">#4 実地訓練1日目</option>
         <option value="8">#8 最終試験</option>
         <option value="9">#9 優先順位の判断</option>
+        <option value="11">#11 赤のような青</option>
+        <option value="16">#16 つじつまは合っている</option>
       </select></div>
       <div><label>人数</label><select id="pc"><option value="4">4人</option><option value="5">5人</option></select></div>
     </div>
@@ -331,15 +333,17 @@ function renderGame(){
 
   // board track
   var lw=g('ledger');lw.innerHTML='';
-  for(var n=1;n<=12;n++){var rem=4-cutCount(n);var c=document.createElement('div');c.className='tnum'+(rem===0?' done':'')+(prioLockedN(n)?' locked':'');
-    c.innerHTML='<div class="n">'+n+(prioLockedN(n)?' 🔒':'')+'</div><div class="d">残<b>'+rem+'</b></div>';lw.appendChild(c);
+  for(var n=1;n<=12;n++){var isDanger=(v.dangerNum===n);var rem=4-cutCount(n);var c=document.createElement('div');
+    if(isDanger){c.className='tnum locked';c.innerHTML='<div class="n">'+n+' ☠</div><div class="d" style="color:var(--red)">赤扱い</div>';}
+    else{c.className='tnum'+(rem===0?' done':'')+(prioLockedN(n)?' locked':'');c.innerHTML='<div class="n">'+n+(prioLockedN(n)?' 🔒':'')+'</div><div class="d">残<b>'+rem+'</b></div>';}
+    lw.appendChild(c);
     if(n<12){var gap=document.createElement('div');var rHas=false,yHas=false,rP,yP;
       if(v.marks.redUncertain&&v.marks.redCandidates){if(v.marks.redCandidates.indexOf(n)>=0){rP='<div class="mk rq">?</div>';rHas=true;}else rP='<div class="mkspace"></div>';}else{var r=v.marks.reds.find(function(m){return m.n===n&&!m.done;});if(r){rP='<div class="mk r"></div>';rHas=true;}else rP='<div class="mkspace"></div>';}
       if(v.marks.yellowUncertain&&v.marks.yellowCandidates){if(v.marks.yellowCandidates.indexOf(n)>=0){yP='<div class="mk yq">?</div>';yHas=true;}else yP='<div class="mkspace"></div>';}else{var y=v.marks.yellows.find(function(m){return m.n===n&&!m.cut;});if(y){yP='<div class="mk y"></div>';yHas=true;}else yP='<div class="mkspace"></div>';}
       gap.className='tgap'+((rHas||yHas)?'':' empty');gap.innerHTML=yP+rP;lw.appendChild(gap);}}
 
   // prio strip
-  var ps=g('prioStrip');if(v.prio){var ph='<div class="prio"><span class="plabel">順番に切断</span>';v.prio.nums.forEach(function(nn,ii){var st=(ii<v.prio.ptr)?'done':(ii===v.prio.ptr?'cur':'lock');ph+='<span class="pchip '+st+'">'+L(ii).toLowerCase()+': <b>'+nn+'</b> '+(st==='done'?'✓':(st==='cur'?'◀今ここ':'🔒'))+'</span>';if(ii<2)ph+='<span class="parrow">→</span>';});ph+='</div>';ps.innerHTML=ph;}else ps.innerHTML='';
+  var ps=g('prioStrip');if(v.prio){var ph='<div class="prio"><span class="plabel">順番に切断</span>';v.prio.nums.forEach(function(nn,ii){var st=(ii<v.prio.ptr)?'done':(ii===v.prio.ptr?'cur':'lock');ph+='<span class="pchip '+st+'">'+L(ii).toLowerCase()+': <b>'+nn+'</b> '+(st==='done'?'✓':(st==='cur'?('◀今ここ '+cutCount(nn)+'/'+(v.prio.thr||2)):'🔒'))+'</span>';if(ii<2)ph+='<span class="parrow">→</span>';});ph+='</div>';ps.innerHTML=ph;}else ps.innerHTML='';
 
   // equipment (display only for now)
   var ew=g('equip');ew.innerHTML='';if(v.equip.length){var er=document.createElement('div');er.className='btnrow';v.equip.forEach(function(e,ei){var unlocked=(e.kind==='himitsu')?(v.yCut>0):(cutCount(e.num)>=2);var usable=!e.used&&unlocked&&v.turn===MYSEAT&&!v.over&&!v.infoPhase;var b=document.createElement('button');b.className=usable?'sec':'ghost';b.style.minWidth='130px';b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':(unlocked?' ?':' 🔒'));b.title=usable?'':'タップで効果を確認';b.onclick=usable?(function(j){return function(){startEq(j);};})(ei):(function(k){return function(){showEqHelp(k);};})(e.kind);er.appendChild(b);});ew.appendChild(er);}else ew.innerHTML='<div class="muted">装備なし</div>';
