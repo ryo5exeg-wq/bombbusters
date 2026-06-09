@@ -116,6 +116,11 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
   .sidetitle{display:block;position:fixed;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-family:"Arial Black",Arial,Helvetica,sans-serif;font-weight:900;font-size:42px;line-height:1;letter-spacing:3px;color:var(--red);opacity:.95;pointer-events:none;z-index:5;text-shadow:2px 2px 0 #fff,3px 3px 0 rgba(160,95,20,.22);white-space:nowrap;}
   .sidetitle.left{left:6px;}.sidetitle.right{right:6px;}
 }
+/* === PC（広い画面）だけボード列を広げる。iPad(<=1366px)は据え置き === */
+@media (orientation:landscape) and (min-width:1400px){
+  body{max-width:1700px;}
+  .boardgrid{grid-template-columns:minmax(0,1fr) 760px;}
+}
 </style>
 <style>
 .lobby{max-width:520px;margin:0 auto;}
