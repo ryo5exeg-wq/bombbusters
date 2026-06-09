@@ -118,6 +118,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 }
 .eqbox{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:16px;max-width:430px;width:92%;box-shadow:0 8px 30px rgba(0,0,0,.3);}
 #eqmodal{position:fixed;inset:0;background:rgba(40,30,10,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+#helpmodal{position:fixed;inset:0;background:rgba(40,30,10,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:14px;}#helpmodal.hidden{display:none;}
 #eqmodal.hidden{display:none;}
 .eqtitle{font-weight:800;color:var(--ink);margin-bottom:10px;font-size:15px;}
 .eqsec{margin:8px 0;}.eqsec .lbl{font-size:12px;color:var(--mut);margin-bottom:4px;}
@@ -148,8 +149,9 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
   <div id="banner"></div>
   <div class="boardgrid">
     <div class="card boardequip">
-      <h2><span class="tag">ボード（位置トラック）</span> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
+      <h2><span class="tag">ボード（位置トラック）</span> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" onclick="openHelp()">？あそびかた</button> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
       <div class="track" id="ledger"></div>
+      <div class="legend"><span><span class="dot" style="background:#9bdd6f"></span>切断完了</span> <span><span class="dot" style="background:#d53c3c;border-radius:50%"></span>赤</span> <span><span class="dot" style="background:#efd82d"></span>黄</span> <span>？＝未確定</span> <span>上の白タブ＝情報トークン</span></div>
       <div id="prioStrip"></div>
       <h2 class="subh"><span class="tag">装備カード</span> 共有・1回使い切り</h2>
       <div id="equip"></div>
@@ -165,11 +167,37 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
     <div class="card ctrlcard"><div class="btnrow"><button class="sec" onclick="saveGame(true)">保存</button><button class="ghost" onclick="newGame()">最初から</button></div><div class="note" id="savemsg"></div></div>
   </div>
 </div>
+<div id="helpmodal" class="hidden"><div class="eqbox" style="max-height:82vh;overflow:auto"><div id="helpbody"></div><div class="btnrow"><button class="ghost" onclick="closeHelp()">閉じる</button></div></div></div>
 <div id="eqmodal" class="hidden"><div class="eqbox"><div id="eqtitle" class="eqtitle"></div><div id="eqbody"></div><div class="btnrow" id="eqfoot"></div></div></div>
 <script>
 let S=null;
 const VN=['ケン','アオイ','ユメ','リク'];
 const EQUIP={1:{name:'コトナルラベル',kind:'kotonal'},2:{name:'イレカエシーバー',kind:'swap'},3:{name:'ミッツケル探知機',kind:'mitsu'},4:{name:'ヒント付箋',kind:'reveal'},5:{name:'スーパー探知機',kind:'super'},6:{name:'失敗帳消し機',kind:'life'},7:{name:'非常電池',kind:'battery'},8:{name:'なんでもレーダー',kind:'radar'},9:{name:'万能氷',kind:'ice'},10:{name:'ドッチカアタ・レイ',kind:'dochi'},11:{name:'いつでもコーヒー',kind:'extra'},12:{name:'イコールラベル',kind:'equal'},13:{name:'ヒミツ底',kind:'himitsu'}};
+var EQHELP={
+ kotonal:['コトナルラベル','自分の隣り合う2本に「≠（数字が違う）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
+ swap:['イレカエシーバー','自分の1本と、選んだ仲間の1本を、ランダムに1枚ずつ交換する。'],
+ mitsu:['ミッツケル探知機','数字を1つ宣言。対象の仲間の3本の中にその数字があれば1本切断。外れると残機-1。使うと手番は次の人へ。'],
+ reveal:['ヒント付箋','自分の青コードを1本選んで公開し、仲間へのヒントにする。'],
+ super:['スーパー探知機','自分が持つ数字を1つ宣言。対象の仲間の手札全体にその数字があれば1枚切断。フツーノ探知機の上位版。使うと手番は次へ。'],
+ life:['失敗帳消し機','残機を1つ回復する（＋1）。'],
+ battery:['非常電池','探知機を使い切った仲間（最大2人）を選び、その探知機をもう一度使えるようにする。'],
+ radar:['なんでもレーダー','数字を1つ宣言すると、その数字を伏せて持っているのが誰かが分かる。'],
+ ice:['万能氷','この手番の失敗を無効化。次の宣言が赤でも爆発せず、外しても残機が減らない。'],
+ dochi:['ドッチカアタ・レイ','数字を2つ宣言。対象の仲間の1本がそのどちらかなら切断。外れると残機-1。使うと手番は次へ。'],
+ extra:['いつでもコーヒー','自分以外の好きなプレイヤーを1人選び、その人から手番を再開する。'],
+ equal:['イコールラベル','自分の隣り合う2本に「＝（数字が同じ）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
+ himitsu:['ヒミツ底','#9以降のミッションで登場。黄コードを切断すると使えるようになり、装備カードを2枚ランダムに追加する。']
+};
+var EQORDER=['kotonal','swap','mitsu','reveal','super','life','battery','radar','ice','dochi','extra','equal','himitsu'];
+function eqHelpListHTML(){return EQORDER.map(function(k){var h=EQHELP[k];return '<div class="eqsec"><div class="myhandlabel">'+h[0]+'</div><div class="muted">'+h[1]+'</div></div>';}).join('');}
+var GUIDE_HTML='<div class="eqtitle">あそびかた</div>'
++'<div class="sect"><div class="t">目的</div><div class="muted">みんなで協力して、すべての<b>青の配線</b>を切断するのがゴール。黄の配線も処理し、<b>赤の配線には触らない</b>こと。誰かの残機（❤）が0になる前にクリアを目指します。</div></div>'
++'<div class="sect"><div class="t">手番でできること</div><div class="muted">・<b>切断（2人）</b>：自分が持つ数字を、仲間の同じ数字のコード1本にねらって宣言。当たれば自分の分と合わせて2本切れる。外すと残機-1。<br>・<b>切断（1人）</b>：その数字の残り全部を自分が持っているとき、単独で切れる（確実）。<br>・<b>フツーノ探知機</b>：仲間の隣り合う2本に数字を宣言。当たれば切断、外れても赤は爆発しない（残機-1）。</div></div>'
++'<div class="sect"><div class="t">情報の見方</div><div class="muted">・コードの上の<b>白いタブ</b>＝情報トークン（その位置の数字のヒント）。<br>・<b>＝ / ≠</b>＝ラベル。隣り合う2本が「同じ／違う数字」という意味。</div></div>'
++'<div class="sect"><div class="t">ボードの見方</div><div class="muted">・1〜12の数字が<b>緑</b>になったら、その数字は切断完了。<br>・数字の間の <b>●</b>＝赤がある、<b>▬</b>＝黄がある、<b>？</b>＝そのあたりに未確定の赤/黄。</div></div>';
+function openHelp(){g('helpbody').innerHTML=GUIDE_HTML+'<div class="sect"><div class="t">装備カード（全13種）</div></div>'+eqHelpListHTML();g('helpmodal').classList.remove('hidden');}
+function showEqHelp(kind){var h=EQHELP[kind];if(!h){openHelp();return;}g('helpbody').innerHTML='<div class="eqtitle">'+h[0]+'</div><div class="muted" style="line-height:1.7;font-size:14px">'+h[1]+'</div><div class="btnrow"><button class="sec" onclick="openHelp()">ルールと全カードを見る</button></div>';g('helpmodal').classList.remove('hidden');}
+function closeHelp(){g('helpmodal').classList.add('hidden');}
 const DETCFG={free:{tiles:2,decls:1,yellow:false,name:'フツー探知機',sel:'2本'},mitsu:{tiles:3,decls:1,yellow:false,name:'ミッツケル探知機',sel:'3本'},dochi:{tiles:1,decls:2,yellow:true,name:'ドッチカアタ・レイ',sel:'1本'}};
 const MISSIONS={'4':{reds:1,yellows:2,name:'#4 実地訓練1日目'},'8':{reds:1,yellows:2,name:'#8 最終試験'},'9':{reds:1,yellows:2,name:'#9 優先順位の判断'}};
 function g(id){return document.getElementById(id);}
@@ -475,7 +503,7 @@ function render(){
   // equip
   const ew=g('equip');ew.innerHTML='';
   if(S.equip.length===0){ew.innerHTML='<div class="muted">装備なし</div>';}
-  else{const er=document.createElement('div');er.className='btnrow';S.equip.forEach((e,i)=>{var locked=(e.kind==='himitsu')?(S.yCut<=0):(cutBlue(e.num)<2);const b=document.createElement('button');b.className=(e.used||locked)?'ghost':'sec';b.style.minWidth='150px';b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':(locked?' 🔒':''));b.disabled=e.used||locked;b.title=locked?((e.kind==='himitsu')?'黄コードを切断すると解放':('数字'+e.num+'のペアが切られると解放')):'';b.onclick=()=>useEquip(i);er.appendChild(b);});ew.appendChild(er);}
+  else{const er=document.createElement('div');er.className='btnrow';S.equip.forEach((e,i)=>{var locked=(e.kind==='himitsu')?(S.yCut<=0):(cutBlue(e.num)<2);var usable=!(e.used||locked);const b=document.createElement('button');b.className=usable?'sec':'ghost';b.style.minWidth='150px';b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':(locked?' 🔒':' ?'));b.title=usable?'':((e.kind==='himitsu')?'黄コードを切断すると解放（タップで効果）':('数字'+e.num+'のペアが切られると解放（タップで効果）'));b.onclick=usable?(function(j){return function(){useEquip(j);};})(i):(function(k){return function(){showEqHelp(k);};})(e.kind);er.appendChild(b);});ew.appendChild(er);}
 }
 function revealAll(){if(!confirm('全プレイヤーの手札を公開しますか？'))return;S.showAll=true;pushLog('全員の手札を公開しました（答え合わせ）。','me');render();}
 function newGame(){if(confirm('新しい卓を配り直しますか？')){g('board').classList.add('hidden');g('setupCard').classList.remove('hidden');}}
