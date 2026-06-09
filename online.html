@@ -263,15 +263,28 @@ function saveSession(){try{localStorage.setItem('bb_online',JSON.stringify({SRV:
 function enterWaiting(){saveSession();show('waiting');g('wcode').textContent=CODE;startPoll();}
 function tryReconnect(sv){SRV=sv.SRV;CODE=sv.CODE;PID=sv.PID;api('/api/room/'+CODE+'/state?playerId='+PID).then(function(r){if(r&&r.ok&&r.you>=0){ROOM=r.room;MYSEAT=r.you;startPoll();}else{localStorage.removeItem('bb_online');show('lobby');}}).catch(function(){localStorage.removeItem('bb_online');show('lobby');});}
 function startGame(){api('/api/room/'+CODE+'/start','POST',{playerId:PID}).then(function(r){if(r.error)err(r.error);});}
-function leaveGame(){if(poll)clearInterval(poll);try{localStorage.removeItem('bb_online');}catch(e){}show('lobby');}
+function leaveGame(){stopPoll();try{localStorage.removeItem('bb_online');}catch(e){}show('lobby');}
 
-function startPoll(){if(poll)clearInterval(poll);poll=setInterval(tick,1500);tick();}
+var polling=false;
+function stopPoll(){polling=false;if(poll){clearTimeout(poll);poll=null;}}
+function startPoll(){stopPoll();polling=true;tick();}
+// poll fast while waiting on others/AI, slow while it's our own move (nothing changes server-side until we act)
+function nextDelay(){
+  if(!ROOM||!ROOM.started)return 1500;          // lobby / waiting room
+  if(!VIEW)return 1000;
+  if(VIEW.over)return 3000;
+  var mine=(VIEW.turn===MYSEAT)||VIEW.youPlaceInfo||VIEW.youPlaceMissInfo||VIEW.youDetPick;
+  return mine?2500:700;                          // waiting on someone else => fast
+}
 function tick(){
+  if(!polling)return;
+  if(poll){clearTimeout(poll);poll=null;}   // keep a single timer chain even if tick() is called directly
   api('/api/room/'+CODE+'/state?playerId='+PID).then(function(r){
-    if(r.error)return; ROOM=r.room; MYSEAT=r.you;
-    if(!r.started){renderWaiting();show('waiting');return;}
-    VIEW=r.view; show('game'); renderGame();
-  }).catch(function(){});
+    if(!r.error){ROOM=r.room;MYSEAT=r.you;
+      if(!r.started){renderWaiting();show('waiting');}
+      else{VIEW=r.view;show('game');renderGame();}
+    }
+  }).catch(function(){}).then(function(){if(polling)poll=setTimeout(tick,nextDelay());});
 }
 function renderWaiting(){
   var n=ROOM.players.length, cap=ROOM.pcount;
