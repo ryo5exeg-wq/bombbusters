@@ -141,6 +141,7 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 </style>
 </head>
 <body>
+<div class="sidetitle left">BOMB BUSTERS</div><div class="sidetitle right">BOMB BUSTERS</div>
 
 <!-- ===== Lobby ===== -->
 <div id="lobby" class="lobby">
@@ -335,7 +336,7 @@ function renderGame(){
     var mineAct=v.players[MYSEAT].tiles.filter(function(t){return !t.cut&&!t.done;});
     var allRed=mineAct.length>0&&mineAct.every(function(t){return t.t==='R';});
     ab.innerHTML='<div class="btnrow">'
-      +'<button class="blue" onclick="doCut2()">切断（2人）</button>'
+      +'<button class="'+((selTarget&&selOwn!=null)?'blue':'sec')+'" onclick="doCut2()">切断（2人）</button>'
       +'<button class="'+(soloN!=null?'blue':'sec')+'" onclick="doCut1()">切断（1人）</button>'
       +'<button class="'+((myDetector()&&!detMode)||detMode?'blue':'sec')+'" '+(myDetector()||detMode?'':'disabled')+' onclick="toggleDet()">'+(detMode?'探知機：選択中（取消）':'フツーノ探知機')+'</button>'
       +(allRed?'<button class="danger" onclick="doRevealRed()">赤を全部公開</button>':'')
