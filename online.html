@@ -315,6 +315,7 @@ function tileHTML(t,isYou){
   var tk=(isYou&&t.revealed&&t.t==='Y')?'<span class="tk yel"></span>':((isYou&&t.revealed&&t.t==='B')?'<span class="tk">'+t.n+'</span>':'');
   if(t.t==='B') return '<div class="tile b'+cut+'">'+tk+'<span class="big">'+t.n+'</span></div>';
   if(t.t==='Y') return '<div class="tile y'+cut+'">'+tk+'<span class="big">'+t.n+'.1</span></div>';
+  if(t.danger) return '<div class="tile r'+cut+'"><span class="big">'+t.n+'</span></div>';
   return '<div class="tile r'+cut+'"><span class="big">'+t.n+'.5</span></div>';
 }
 function L(i){return String.fromCharCode(65+i);}
@@ -412,7 +413,7 @@ function doRestart(){api('/api/room/'+CODE+'/restart','POST',{playerId:PID}).the
 
 var eqMode=null;
 var EQCFG={
- reveal:{own:1,label:'公開する自分の青コードを1枚タップ'},
+ reveal:{own:1,label:'公開する自分の青コードを1枚タップ（位置を選べます）'},
  radar:{own:1,label:'調べたい番号の自分のコードを1枚タップ'},
  extra:{team:1,label:'再開するプレイヤー（仲間のコード）をタップ'},
  battery:{teamMulti:2,label:'探知機を回復する仲間（最大2人）のコードをタップ→実行'},
@@ -438,7 +439,8 @@ function eqTapOwnE(i){if(!eqMode||!eqMode.cfg.own)return;var q=eqMode.own.indexO
 function ownNum(i){var t=VIEW.players[MYSEAT].tiles[i];return (t&&t.t==='B'&&!t.cut&&!t.done)?t.n:null;}
 function ownVal(i){var t=VIEW.players[MYSEAT].tiles[i];return (t&&!t.cut&&!t.done)?(t.t==='Y'?'Y':t.n):null;}
 function eqTry(){if(!eqMode)return;var k=eqMode.kind,p={};
-  if(k==='reveal'||k==='radar'){if(eqMode.own.length===1){var n=ownNum(eqMode.own[0]);if(n==null){alert('青コードを選んでね');eqMode.own=[];return;}p.n=n;eqSend(p);}}
+  if(k==='radar'){if(eqMode.own.length===1){var n=ownNum(eqMode.own[0]);if(n==null){alert('青コードを選んでね');eqMode.own=[];return;}p.n=n;eqSend(p);}}
+  else if(k==='reveal'){if(eqMode.own.length===1){var _ri=eqMode.own[0];var _rt=VIEW.players[MYSEAT].tiles[_ri];if(!_rt||_rt.t!=='B'||_rt.cut||_rt.done||_rt.revealed){alert('公開できる青コードを選んでね');eqMode.own=[];return;}p.idx=_ri;eqSend(p);}}
   else if(k==='extra'){if(eqMode.team!=null){p.target=eqMode.team;eqSend(p);}}
   else if(k==='super'){if(eqMode.team!=null&&eqMode.own.length===1){var n2=ownNum(eqMode.own[0]);if(n2==null){alert('青コードで数字を指定してね');eqMode.own=[];return;}p.target=eqMode.team;p.n=n2;eqSend(p);}}
   else if(k==='swap'){if(eqMode.team!=null&&eqMode.own.length===1){p.target=eqMode.team;p.give=eqMode.own[0];eqSend(p);}}

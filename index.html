@@ -206,7 +206,7 @@ function openHelp(){g('helpbody').innerHTML=GUIDE_HTML+'<div class="sect"><div c
 function showEqHelp(kind){var h=EQHELP[kind];if(!h){openHelp();return;}g('helpbody').innerHTML='<div class="eqtitle">'+h[0]+'</div><div class="muted" style="line-height:1.7;font-size:14px">'+h[1]+'</div><div class="btnrow"><button class="sec" onclick="openHelp()">ルールと全カードを見る</button></div>';g('helpmodal').classList.remove('hidden');}
 function closeHelp(){g('helpmodal').classList.add('hidden');}
 const DETCFG={free:{tiles:2,decls:1,yellow:false,name:'フツー探知機',sel:'2本'},mitsu:{tiles:3,decls:1,yellow:false,name:'ミッツケル探知機',sel:'3本'},dochi:{tiles:1,decls:2,yellow:true,name:'ドッチカアタ・レイ',sel:'1本'}};
-const MISSIONS={'4':{reds:1,yellows:2,name:'#4 実地訓練1日目'},'8':{reds:1,yellows:2,name:'#8 最終試験'},'9':{reds:1,yellows:2,name:'#9 優先順位の判断'},'11':{reds:1,yellows:2,name:'#11 赤のような青'},'16':{reds:1,yellows:2,name:'#16 つじつまは合っている'}};
+const MISSIONS={'4':{reds:1,yellows:2,name:'#4 実地訓練1日目'},'8':{reds:1,yellows:2,name:'#8 最終試験'},'9':{reds:1,yellows:2,name:'#9 優先順位の判断'},'11':{reds:0,yellows:2,name:'#11 赤のような青'},'16':{reds:1,yellows:2,name:'#16 つじつまは合っている'}};
 function g(id){return document.getElementById(id);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function pick(a,k){return shuffle(a.slice()).slice(0,k);}
@@ -413,7 +413,7 @@ function useEquip(i){if(S.pickInfo)return;const e=S.equip[i];if(e.used||S.over)r
   if(e.kind==='swap'){if(S.turn!==0){alert('入れ替えはあなたの手番で使ってください');return;}openEquipModal(i);return;}
   if(e.kind==='life'){S.lives=(S.lives+1);e.used=true;pushLog('装備「'+e.name+'」：残機+1。','ok');}
   else if(e.kind==='extra'){if(S.turn!==0){alert('いつでもコーヒーはあなたの手番に使います');return;}openEquipModal(i);return;}
-  else if(e.kind==='reveal'){const v=prompt('自分の手札で公開する番号(1-12)：自分のその青を1枚オモテに（仲間へのヒント）');const n=parseInt(v);if(isNaN(n))return;var P0=S.players[0];var f=P0.tiles.find(function(t){return t.t==='B'&&t.n===n&&!t.cut&&!t.done&&!t.revealed;});if(f){f.revealed=true;e.used=true;pushLog('装備「'+e.name+'」：自分の '+n+' を1枚公開（仲間へのヒント）。','ok');}else{alert('その番号の自分の青い伏せ札が見つかりません');return;}}
+  else if(e.kind==='reveal'){const v=prompt('自分の手札で公開する番号(1-12)：自分のその青を1枚オモテに（仲間へのヒント）');const n=parseInt(v);if(isNaN(n))return;var P0=S.players[0];var cands=[];P0.tiles.forEach(function(t,i){if(t.t==='B'&&t.n===n&&!t.cut&&!t.done&&!t.revealed)cands.push(i);});if(!cands.length){alert('その番号の自分の青い伏せ札が見つかりません');return;}var chosen=cands[0];if(cands.length>1){var labels=cands.map(function(i){return L(i);}).join('・');var pv=prompt(n+' を'+cands.length+'枚持っています。公開する位置を選んでください（'+labels+'）：');if(!pv)return;pv=pv.trim().toUpperCase();var pk=cands.find(function(i){return L(i)===pv;});if(pk==null){alert('その位置は選べません');return;}chosen=pk;}P0.tiles[chosen].revealed=true;e.used=true;pushLog('装備「'+e.name+'」：自分の '+n+'（'+L(chosen)+'）を公開（仲間へのヒント）。','ok');}
   else{e.used=true;pushLog('装備「'+e.name+'」：効果はカード文どおり手動適用（使用済みに）。');}
   checkEnd();render();saveGame();
 }
@@ -429,7 +429,7 @@ function tileHTML(t,isYou,showAll){
   const tk=(t.revealed&&t.t==='Y')?'<span class="tk yel"></span>':((t.revealed&&t.t==='B')?'<span class="tk">'+t.n+'</span>':'');
   if(t.t==='B')return '<div class="tile b'+cut+'" data-n="'+t.n+'">'+tk+'<span class="big">'+t.n+'</span></div>';
   if(t.t==='Y')return '<div class="tile y'+cut+'">'+tk+'<span class="big">'+t.n+'.1</span></div>';
-  return '<div class="tile r'+cut+'"><span class="big">'+t.n+'.5</span></div>';
+  return (t.danger?('<div class="tile r'+cut+'"><span class="big">'+t.n+'</span></div>'):('<div class="tile r'+cut+'"><span class="big">'+t.n+'.5</span></div>'));
 }
 function render(){
   if(!S)return;
