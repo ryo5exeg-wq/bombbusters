@@ -185,6 +185,8 @@ body.disp-tab .sidetitle{display:none!important;}
 <div id="helpmodal" class="hidden"><div class="eqbox" style="max-height:82vh;overflow:auto"><div id="helpbody"></div><div class="btnrow"><button class="ghost" onclick="closeHelp()">閉じる</button></div></div></div>
 <div id="eqmodal" class="hidden"><div class="eqbox"><div id="eqtitle" class="eqtitle"></div><div id="eqbody"></div><div class="btnrow" id="eqfoot"></div></div></div>
 <script src="multiplayer/game_core.js"></script>
+<script>/* フォールバック: GitHub Pagesでは直下のgame_core.jsを読む */
+if(typeof deal==='undefined')document.write('<script src="game_core.js"><\/script>');</script>
 <script>
 var EQHELP={
  kotonal:['コトナルラベル','自分の隣り合う2本に「≠（数字が違う）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
