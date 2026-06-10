@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1a2238">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>爆弾解除 ソロ補助ツール（4人卓）</title>
 <style>
 :root{--bg:#fbe9c8;--panel:#ffffff;--panel2:#fff2d6;--line:#ecd0a2;--gold:#e89b16;--red:#ff5d62;--blue:#3f9bff;--green:#2fbf6a;--text:#4d3f1f;--mut:#a98f60;--wire:#5fb8d0;--ink:#2c2310;--dark:#222c52;}
@@ -167,6 +170,11 @@ body.disp-tab .sidetitle{display:none!important;}
       <option value="4">4人</option>
       <option value="5">5人</option>
     </select></div>
+    <div><label>AIの性格</label><select id="aiStyle">
+      <option value="std">標準</option>
+      <option value="safe">慎重（赤リスクを徹底回避）</option>
+      <option value="bold">大胆（低い確信でも勝負）</option>
+    </select></div>
   </div>
   <div class="btnrow"><button onclick="deal()">配って開始</button><button class="ghost" onclick="loadSaved()">前回を読み込む</button></div>
 </div>
@@ -227,6 +235,9 @@ function applyDisp(){var on=false;try{on=localStorage.getItem('bb_disp')==='tab'
  document.body.classList.toggle('disp-tab',on);
  var b=document.getElementById('dispBtn');if(b)b.textContent=on?'🖥️PC表示に戻す':'📱配信用(縦長)';}
 function toggleDisp(){try{localStorage.setItem('bb_disp',localStorage.getItem('bb_disp')==='tab'?'pc':'tab');}catch(e){}applyDisp();}
+/* PWA: https配信時のみService Worker登録（最新優先・オフライン時キャッシュ） */
+if('serviceWorker' in navigator && location.protocol==='https:'){try{navigator.serviceWorker.register('sw.js');}catch(e){}}
+
 function toast(msg){var c=document.getElementById('toasts');if(!c){c=document.createElement('div');c.id='toasts';document.body.appendChild(c);}
  var t=document.createElement('div');t.className='toastmsg';t.textContent=msg;c.appendChild(t);
  requestAnimationFrame(function(){t.classList.add('show');});

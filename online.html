@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1a2238">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>爆弾解除 オンライン対戦</title>
 <style>
 :root{--bg:#fbe9c8;--panel:#ffffff;--panel2:#fff2d6;--line:#ecd0a2;--gold:#e89b16;--red:#ff5d62;--blue:#3f9bff;--green:#2fbf6a;--text:#4d3f1f;--mut:#a98f60;--wire:#5fb8d0;--ink:#2c2310;--dark:#222c52;}
@@ -195,7 +198,7 @@ body.disp-tab .sidetitle{display:none!important;}
   <div class="card">
     <h2><span class="tag b">コードで参加</span></h2>
     <div class="row"><div><label>部屋コード</label><input id="jc" placeholder="ABCD" maxlength="6" style="text-transform:uppercase"></div></div>
-    <div class="btnrow"><button class="blue" onclick="joinRoom()">参加する</button></div>
+    <div class="btnrow"><button class="blue" onclick="joinRoom()">参加する</button><button class="ghost" onclick="spectateRoom()">観戦する</button></div>
   </div>
   <div id="err"></div>
 </div>
@@ -272,6 +275,9 @@ function applyDisp(){var on=false;try{on=localStorage.getItem('bb_disp')==='tab'
  document.body.classList.toggle('disp-tab',on);
  var b=document.getElementById('dispBtn');if(b)b.textContent=on?'🖥️PC表示に戻す':'📱配信用(縦長)';}
 function toggleDisp(){try{localStorage.setItem('bb_disp',localStorage.getItem('bb_disp')==='tab'?'pc':'tab');}catch(e){}applyDisp();}
+/* PWA: https配信時のみService Worker登録（最新優先・オフライン時キャッシュ） */
+if('serviceWorker' in navigator && location.protocol==='https:'){try{navigator.serviceWorker.register('sw.js');}catch(e){}}
+
 function toast(msg){var c=document.getElementById('toasts');if(!c){c=document.createElement('div');c.id='toasts';document.body.appendChild(c);}
  var t=document.createElement('div');t.className='toastmsg';t.textContent=msg;c.appendChild(t);
  requestAnimationFrame(function(){t.classList.add('show');});
@@ -289,6 +295,12 @@ function createRoom(){
   api('/api/room/create','POST',{hostName:g('nm').value||'ホスト',mission:g('ms').value,pcount:parseInt(g('pc').value)})
   .then(function(r){if(r.error){err(r.error);return;}PID=r.playerId;CODE=r.code;MYSEAT=r.seat;ROOM=r.room;enterWaiting();})
   .catch(function(){err('サーバーに接続できませんでした。URLを確認してね');});
+}
+function spectateRoom(){
+  SRV=g('srv').value.trim();var c=g('jc').value.trim().toUpperCase();if(!SRV||!c){err('URLとコードを入れてね');return;}err('');
+  PID='';CODE=c;MYSEAT=-1;ROOM=null;
+  api('/api/room/'+c+'/state').then(function(r){if(r.error){err('部屋が見つかりません');return;}ROOM=r.room;toast('観戦モードで入室しました（全員の手札は伏せて表示）');startPoll();})
+  .catch(function(){err('接続できませんでした。URL/コードを確認してね');});
 }
 function joinRoom(){
   SRV=g('srv').value.trim(); var c=g('jc').value.trim().toUpperCase(); if(!SRV||!c){err('URLとコードを入れてね');return;} err('');
