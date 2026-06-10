@@ -182,9 +182,9 @@ const VN=['ケン','アオイ','ユメ','リク'];
 const EQUIP={1:{name:'コトナルラベル',kind:'kotonal'},2:{name:'イレカエシーバー',kind:'swap'},3:{name:'ミッツケル探知機',kind:'mitsu'},4:{name:'ヒント付箋',kind:'reveal'},5:{name:'スーパー探知機',kind:'super'},6:{name:'失敗帳消し機',kind:'life'},7:{name:'非常電池',kind:'battery'},8:{name:'なんでもレーダー',kind:'radar'},9:{name:'万能氷',kind:'ice'},10:{name:'ドッチカアタ・レイ',kind:'dochi'},11:{name:'いつでもコーヒー',kind:'extra'},12:{name:'イコールラベル',kind:'equal'},13:{name:'ヒミツ底',kind:'himitsu'}};
 var EQHELP={
  kotonal:['コトナルラベル','自分の隣り合う2本に「≠（数字が違う）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
- swap:['イレカエシーバー','自分の1本と、選んだ仲間の1本を、ランダムに1枚ずつ交換する。'],
+ swap:['イレカエシーバー','自分が選んだ1本と、仲間が選んだ1本を交換する。交換する相手は装備の使用を宣言したプレイヤーが選ぶ。'],
  mitsu:['ミッツケル探知機','数字を1つ宣言。対象の仲間の3本の中にその数字があれば1本切断。外れると残機-1。使うと手番は次の人へ。'],
- reveal:['ヒント付箋','自分の青コードを1本選んで公開し、仲間へのヒントにする。'],
+ reveal:['ヒント付箋','自分の青コードを1本選んで情報トークンを置く。仲間へのヒントにする。'],
  super:['スーパー探知機','自分が持つ数字を1つ宣言。対象の仲間の手札全体にその数字があれば1枚切断。フツーノ探知機の上位版。使うと手番は次へ。'],
  life:['失敗帳消し機','残機を1つ回復する（＋1）。'],
  battery:['非常電池','探知機を使い切った仲間（最大2人）を選び、その探知機をもう一度使えるようにする。'],
@@ -198,8 +198,8 @@ var EQHELP={
 var EQORDER=['kotonal','swap','mitsu','reveal','super','life','battery','radar','ice','dochi','extra','equal','himitsu'];
 function eqHelpListHTML(){return EQORDER.map(function(k){var h=EQHELP[k];return '<div class="eqsec"><div class="myhandlabel">'+h[0]+'</div><div class="muted">'+h[1]+'</div></div>';}).join('');}
 var GUIDE_HTML='<div class="eqtitle">あそびかた</div>'
-+'<div class="sect"><div class="t">目的</div><div class="muted">みんなで協力して、すべての<b>青の配線</b>を切断するのがゴール。黄の配線も処理し、<b>赤の配線には触らない</b>こと。誰かの残機（❤）が0になる前にクリアを目指します。</div></div>'
-+'<div class="sect"><div class="t">手番でできること</div><div class="muted">・<b>切断（2人）</b>：自分が持つ数字を、仲間の同じ数字のコード1本にねらって宣言。当たれば自分の分と合わせて2本切れる。外すと残機-1。<br>・<b>切断（1人）</b>：その数字の残り全部を自分が持っているとき、単独で切れる（確実）。<br>・<b>フツーノ探知機</b>：仲間の隣り合う2本に数字を宣言。当たれば切断、外れても赤は爆発しない（残機-1）。</div></div>'
++'<div class="sect"><div class="t">目的</div><div class="muted">みんなで協力して、すべての<b>青の配線</b>を切断するのがゴール。黄の配線も処理し、<b>赤の配線には触らない</b>こと。ライフ（❤）が0になる前にクリアを目指します。</div></div>'
++'<div class="sect"><div class="t">手番でできること</div><div class="muted">・<b>切断（2人）</b>：自分が持つ数字のコード１本と、仲間が持つ同じ数字のコード１本を狙って宣言。当たれば自分の分と合わせて2本切れる。外すと残機が１減り、宣言されたプレイヤーは指定されたコードに情報トークンを置く。<br>・<b>切断（1人）</b>：すでに同じ数字が１組（２本）切断されていて、残りの２本を持っているとき、単独でその２本を切断できる。同じ数字を４本持っているときは、一度に４本切断ができる。<br>・<b>フツーノ探知機</b>：仲間の持つコード2本に対して、数字をひとつ宣言する。その後の動きは２人での切断と同様だが、同じ数字２本のうちどちらを切るかや外したとき情報トークンをどちらに置くかは宣言されたプレイヤーが選ぶことができる。宣言したコードに赤が含まれていてもゲームは終了しない。</div></div>'
 +'<div class="sect"><div class="t">情報の見方</div><div class="muted">・コードの上の<b>白いタブ</b>＝情報トークン（その位置の数字のヒント）。<br>・<b>＝ / ≠</b>＝ラベル。隣り合う2本が「同じ／違う数字」という意味。</div></div>'
 +'<div class="sect"><div class="t">ボードの見方</div><div class="muted">・1〜12の数字が<b>緑</b>になったら、その数字は切断完了。<br>・数字の間の <b>●</b>＝赤がある、<b>▬</b>＝黄がある、<b>？</b>＝そのあたりに未確定の赤/黄。</div></div>';
 function openHelp(){g('helpbody').innerHTML=GUIDE_HTML+'<div class="sect"><div class="t">装備カード（全13種）</div></div>'+eqHelpListHTML();g('helpmodal').classList.remove('hidden');}
