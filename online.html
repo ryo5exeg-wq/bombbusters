@@ -129,6 +129,16 @@ body.disp-tab .sidetitle{display:none!important;}
 #toasts{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none;width:min(92vw,430px);}
 .toastmsg{background:rgba(35,30,20,.93);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transform:translateY(-6px);transition:.25s;white-space:pre-line;text-align:center;}
 .toastmsg.show{opacity:1;transform:none;}
+/* ===== 配信用演出 ===== */
+.fx-flash{position:fixed;inset:0;z-index:600;pointer-events:none;animation:fxfade .5s forwards;}
+@keyframes fxfade{from{opacity:1}to{opacity:0}}
+.fx-p{position:fixed;z-index:610;pointer-events:none;}
+@keyframes fxfall{from{transform:translateY(0) rotate(0)}to{transform:translateY(115vh) rotate(380deg)}}
+@keyframes fxrise{0%{transform:translateY(0) scale(.6);opacity:1}100%{transform:translateY(-45vh) scale(1.7);opacity:0}}
+.fx-shake{animation:fxsh .35s;}
+.fx-shake-big{animation:fxshb .65s;}
+@keyframes fxsh{0%,100%{transform:translate(0)}20%{transform:translate(-6px,2px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,-2px)}80%{transform:translate(3px,2px)}}
+@keyframes fxshb{0%,100%{transform:translate(0)}10%{transform:translate(-12px,6px)}25%{transform:translate(10px,-8px)}40%{transform:translate(-9px,-5px)}55%{transform:translate(8px,6px)}70%{transform:translate(-6px,3px)}85%{transform:translate(4px,-3px)}}
 .connbar{position:fixed;top:0;left:0;right:0;background:#b91c1c;color:#fff;text-align:center;font-weight:800;padding:6px;z-index:400;font-size:13px;}
 </style>
 <style>
@@ -210,7 +220,7 @@ body.disp-tab .sidetitle{display:none!important;}
   <div id="banner"></div>
   <div class="boardgrid">
     <div class="card boardequip">
-      <h2><span class="tag">ボード</span> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" onclick="openHelp()">？あそびかた</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="dispBtn" onclick="toggleDisp()">📱配信用</button> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
+      <h2><span class="tag">ボード</span> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" onclick="openHelp()">？あそびかた</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="dispBtn" onclick="toggleDisp()">📱配信用</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="fxBtn" onclick="toggleFx()">🔊演出</button> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
       <div class="track" id="ledger"></div>
       <div class="legend"><span><span class="dot" style="background:#9bdd6f"></span>切断完了</span> <span><span class="dot" style="background:#d53c3c;border-radius:50%"></span>赤</span> <span><span class="dot" style="background:#efd82d"></span>黄</span> <span>？＝未確定</span> <span>上の白タブ＝情報トークン</span></div>
       <div id="prioStrip"></div>
@@ -419,7 +429,7 @@ function renderGame(){
     da.innerHTML='<div class="declare">'+(detMode?('<b>探知機</b>：相手の手札を2枚＋自分の手札（数字）をタップ。選択中 '+detSel.length+'/2'):('<b>あなたの番</b>。相手＋自分の手札をタップ→ボタン。<br>相手：<b>'+selTxt+'</b> ／ 自分：<b>'+ownTxt+'</b>'))+'</div>';
   } else { ab.innerHTML='';da.innerHTML='<div class="declare"><b>'+v.players[v.turn].name+'</b> の番を待っています…</div>'; }
 
-  g('log').innerHTML=(v.log||[]).join('');
+  var __lgarr=(v.log||[]);fxScanLog(__lgarr);g('log').innerHTML=__lgarr.join('');
 }
 function myDetector(){return VIEW.players[MYSEAT].detector;}
 function ownSoloNumber(){if(selOwn==null)return null;var t=VIEW.players[MYSEAT].tiles[selOwn];if(!t||t.cut||t.done)return null;
@@ -431,7 +441,7 @@ function tapOpp(pi,i){if(detMode){if(detSel.length&&detSel[0].pi!==pi)detSel=[];
 function toggleDet(){detMode=!detMode;detSel=[];renderGame();}
 
 function doRevealRed(){act({kind:'revealAllRed'});}
-function doRestart(){api('/api/room/'+CODE+'/restart','POST',{playerId:PID}).then(function(r){if(r.error)toast(r.error);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
+function doRestart(){FXLOG.init=false;api('/api/room/'+CODE+'/restart','POST',{playerId:PID}).then(function(r){if(r.error)toast(r.error);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
 
 var eqMode=null;
 var EQCFG={
@@ -508,6 +518,41 @@ function sendDetector(ownIdx){if(detSel.length!==2){toast('相手の手札を2�
 (function(){var hadQ=false;try{var q=new URLSearchParams(location.search);if(q.get('server')){g('srv').value=q.get('server');hadQ=true;}if(q.get('code')){g('jc').value=(q.get('code')||'').toUpperCase();hadQ=true;}if(q.get('name'))g('nm').value=q.get('name');}catch(e){}
   if(!hadQ){try{var sv=JSON.parse(localStorage.getItem('bb_online')||'null');if(sv&&sv.SRV&&sv.CODE&&sv.PID)tryReconnect(sv);}catch(e){}}
   try{var q2=new URLSearchParams(location.search);if(q2.get('code')){var cc=g('createCard');if(cc)cc.classList.add('hidden');}}catch(e){}})();
+
+/* ===== 配信用演出（効果音=Web Audio合成・映像=フラッシュ/シェイク/パーティクル） ===== */
+var FX={on:true,ac:null,lastBoom:0};
+try{FX.on=(localStorage.getItem('bb_fx')!=='off');}catch(e){}
+function fxInit(){if(!FX.ac){var AC=window.AudioContext||window.webkitAudioContext;if(AC){try{FX.ac=new AC();}catch(e){}}}if(FX.ac&&FX.ac.state==='suspended')FX.ac.resume();}
+document.addEventListener('pointerdown',fxInit);
+function fxBtnSync(){var b=g('fxBtn');if(b)b.textContent=FX.on?'🔊演出':'🔇演出';}
+function toggleFx(){FX.on=!FX.on;try{localStorage.setItem('bb_fx',FX.on?'on':'off');}catch(e){}fxBtnSync();if(FX.on){fxInit();fxEvent('cut');}}
+function fxTone(f,dur,type,vol,delay){if(!FX.ac)return;var t=FX.ac.currentTime+(delay||0);var o=FX.ac.createOscillator(),gn=FX.ac.createGain();o.type=type||'sine';o.frequency.value=f;gn.gain.setValueAtTime(vol||.2,t);gn.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(gn);gn.connect(FX.ac.destination);o.start(t);o.stop(t+dur+.05);}
+function fxNoise(dur,vol,fq,delay){if(!FX.ac)return;var t=FX.ac.currentTime+(delay||0);var n=Math.floor(FX.ac.sampleRate*dur);var buf=FX.ac.createBuffer(1,n,FX.ac.sampleRate);var d=buf.getChannelData(0);for(var i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);var src=FX.ac.createBufferSource();src.buffer=buf;var f=FX.ac.createBiquadFilter();f.type='lowpass';f.frequency.value=fq||1200;var gn=FX.ac.createGain();gn.gain.value=vol||.3;src.connect(f);f.connect(gn);gn.connect(FX.ac.destination);src.start(t);}
+function fxShake(big){var b=document.body;b.classList.remove('fx-shake','fx-shake-big');void b.offsetWidth;b.classList.add(big?'fx-shake-big':'fx-shake');setTimeout(function(){b.classList.remove('fx-shake','fx-shake-big');},big?700:380);}
+function fxFlash(c){var f=document.createElement('div');f.className='fx-flash';f.style.background=c;document.body.appendChild(f);setTimeout(function(){if(f.parentNode)f.parentNode.removeChild(f);},520);}
+function fxBurst(ch,n,rise){for(var i=0;i<n;i++){(function(){var p=document.createElement('div');p.className='fx-p';p.textContent=ch;p.style.left=(8+Math.random()*84)+'vw';p.style.top=(rise?(55+Math.random()*30)+'vh':'-8vh');p.style.fontSize=(16+Math.random()*22)+'px';p.style.animation='fx'+(rise?'rise':'fall')+' '+(0.9+Math.random()*1.4)+'s '+(rise?'ease-out':'ease-in')+' '+(Math.random()*0.5)+'s forwards';document.body.appendChild(p);setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p);},3200);})();}}
+function fxEvent(kind){if(!FX.on)return;fxInit();var now=Date.now();
+ if(kind==='boom'){if(now-FX.lastBoom<1500)return;FX.lastBoom=now;fxNoise(.7,.5,700);fxTone(55,.6,'sine',.45);fxTone(40,.8,'sine',.3,.1);fxShake(true);fxFlash('rgba(255,110,20,.45)');fxBurst('💥',12,true);fxBurst('🔥',8,true);}
+ else if(kind==='cut'){fxTone(950,.06,'triangle',.22);fxTone(1500,.09,'triangle',.16,.05);fxNoise(.05,.12,5000);fxFlash('rgba(255,215,90,.16)');fxBurst('✨',6,true);}
+ else if(kind==='miss'){fxTone(150,.16,'square',.18);fxTone(110,.22,'square',.14,.07);fxShake(false);fxFlash('rgba(255,60,60,.16)');}
+ else if(kind==='win'){[523,659,784,1047].forEach(function(f,i){fxTone(f,.16,'sine',.2,i*.12);});fxTone(1318,.5,'sine',.18,.55);fxBurst('🎉',26,false);fxBurst('✨',16,false);fxBurst('🎊',12,false);}}
+function fxClassify(s,cls){s=String(s);
+ if(s.indexOf('爆発しない')<0&&s.indexOf('爆発')>=0)return 'boom';
+ if(s.indexOf('解除成功')>=0)return 'win';
+ if(cls==='ok'&&s.indexOf('切断')>=0)return 'cut';
+ if(cls==='bad')return 'miss';
+ return null;}
+fxBtnSync();
+/* ログ差分を監視して演出を発火（初回表示・再戦直後は鳴らさない） */
+var FXLOG={first:null,init:false};
+function fxScanLog(arr){
+ if(!arr.length){FXLOG.first=null;FXLOG.init=true;return;}
+ if(!FXLOG.init){FXLOG.init=true;FXLOG.first=arr[0];return;}
+ var news=[];for(var i=0;i<arr.length;i++){if(arr[i]===FXLOG.first)break;news.push(arr[i]);}
+ FXLOG.first=arr[0];
+ if(news.length>4){return;}  /* 大量差分=再戦などの切替とみなしスキップ */
+ for(var j=news.length-1;j>=0;j--){var h=news[j];var cm=h.match(/class="(\w*)"/);var k=fxClassify(h.replace(/<[^>]+>/g,''),cm?cm[1]:'');if(k)fxEvent(k);}
+}
 </script>
 </body>
 </html>
