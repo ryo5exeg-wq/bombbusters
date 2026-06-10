@@ -539,8 +539,8 @@ function fxEvent(kind){if(!FX.on)return;fxInit();var now=Date.now();
 function fxClassify(s,cls){s=String(s);
  if(s.indexOf('爆発しない')<0&&s.indexOf('爆発')>=0)return 'boom';
  if(s.indexOf('解除成功')>=0)return 'win';
- if(cls==='ok'&&s.indexOf('切断')>=0)return 'cut';
- if(cls==='bad')return 'miss';
+ if(cls==='bad'||s.indexOf('はずれ')>=0||s.indexOf('外れ')>=0)return 'miss';
+ if(s.indexOf('切断')>=0)return 'cut';
  return null;}
 fxBtnSync();
 /* ログ差分を監視して演出を発火（初回表示・再戦直後は鳴らさない） */
