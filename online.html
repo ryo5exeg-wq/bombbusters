@@ -125,6 +125,11 @@ button:active{transform:translateY(2px);box-shadow:none;}button:disabled{opacity
 body.disp-tab{max-width:820px!important;padding-left:14px!important;padding-right:14px!important;}
 body.disp-tab .boardgrid{display:flex!important;flex-direction:column!important;}
 body.disp-tab .sidetitle{display:none!important;}
+/* ===== トースト通知 ===== */
+#toasts{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none;width:min(92vw,430px);}
+.toastmsg{background:rgba(35,30,20,.93);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transform:translateY(-6px);transition:.25s;white-space:pre-line;text-align:center;}
+.toastmsg.show{opacity:1;transform:none;}
+.connbar{position:fixed;top:0;left:0;right:0;background:#b91c1c;color:#fff;text-align:center;font-weight:800;padding:6px;z-index:400;font-size:13px;}
 </style>
 <style>
 .lobby{max-width:520px;margin:0 auto;}
@@ -151,6 +156,7 @@ body.disp-tab .sidetitle{display:none!important;}
 </style>
 </head>
 <body>
+<div id="connbar" class="connbar hidden">⚠ 接続が不安定です。再接続しています…</div>
 <div class="sidetitle left">BOMB BUSTERS</div><div class="sidetitle right">BOMB BUSTERS</div>
 
 <!-- ===== Lobby ===== -->
@@ -225,7 +231,7 @@ body.disp-tab .sidetitle{display:none!important;}
 <div id="eqmodal" class="hidden"><div class="eqbox"><div id="eqtitle" class="eqtitle"></div><div id="eqbody"></div><div class="btnrow" id="eqfoot"></div></div></div>
 
 <script>
-var SRV='', PID='', CODE='', MYSEAT=-1, ROOM=null, VIEW=null, poll=null;
+var SRV='', PID='', CODE='', MYSEAT=-1, ROOM=null, VIEW=null, poll=null, REV=0, failCount=0;
 var selTarget=null, selOwn=null, detMode=false, detSel=[];
 var EQHELP={
  kotonal:['コトナルラベル','自分の隣り合う2本に「≠（数字が違う）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
@@ -256,6 +262,11 @@ function applyDisp(){var on=false;try{on=localStorage.getItem('bb_disp')==='tab'
  document.body.classList.toggle('disp-tab',on);
  var b=document.getElementById('dispBtn');if(b)b.textContent=on?'🖥️PC表示に戻す':'📱配信用(縦長)';}
 function toggleDisp(){try{localStorage.setItem('bb_disp',localStorage.getItem('bb_disp')==='tab'?'pc':'tab');}catch(e){}applyDisp();}
+function toast(msg){var c=document.getElementById('toasts');if(!c){c=document.createElement('div');c.id='toasts';document.body.appendChild(c);}
+ var t=document.createElement('div');t.className='toastmsg';t.textContent=msg;c.appendChild(t);
+ requestAnimationFrame(function(){t.classList.add('show');});
+ var ms=Math.min(6000,2200+String(msg).length*45);
+ setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},ms);}
 applyDisp();
 function g(id){return document.getElementById(id);}
 function show(id){['lobby','waiting','game'].forEach(function(x){g(x).classList.add('hidden');});g(id).classList.remove('hidden');}
@@ -284,6 +295,7 @@ function leaveGame(){stopPoll();try{localStorage.removeItem('bb_online');}catch(
 var polling=false;
 function stopPoll(){polling=false;if(poll){clearTimeout(poll);poll=null;}}
 function startPoll(){stopPoll();polling=true;tick();}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&polling)tick();});
 // poll fast while waiting on others/AI, slow while it's our own move (nothing changes server-side until we act)
 function nextDelay(){
   if(!ROOM||!ROOM.started)return 1500;          // lobby / waiting room
@@ -296,11 +308,12 @@ function tick(){
   if(!polling)return;
   if(poll){clearTimeout(poll);poll=null;}   // keep a single timer chain even if tick() is called directly
   api('/api/room/'+CODE+'/state?playerId='+PID).then(function(r){
-    if(!r.error){ROOM=r.room;MYSEAT=r.you;
+    failCount=0;g('connbar').classList.add('hidden');
+    if(!r.error){ROOM=r.room;MYSEAT=r.you;REV=r.rev||0;
       if(!r.started){renderWaiting();show('waiting');}
       else{VIEW=r.view;show('game');renderGame();}
     }
-  }).catch(function(){}).then(function(){if(polling)poll=setTimeout(tick,nextDelay());});
+  }).catch(function(){failCount++;if(failCount>=3)g('connbar').classList.remove('hidden');}).then(function(){if(polling)poll=setTimeout(tick,failCount>=3?2000:nextDelay());});
 }
 function renderWaiting(){
   var n=ROOM.players.length, cap=ROOM.pcount;
@@ -418,7 +431,7 @@ function tapOpp(pi,i){if(detMode){if(detSel.length&&detSel[0].pi!==pi)detSel=[];
 function toggleDet(){detMode=!detMode;detSel=[];renderGame();}
 
 function doRevealRed(){act({kind:'revealAllRed'});}
-function doRestart(){api('/api/room/'+CODE+'/restart','POST',{playerId:PID}).then(function(r){if(r.error)alert(r.error);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
+function doRestart(){api('/api/room/'+CODE+'/restart','POST',{playerId:PID}).then(function(r){if(r.error)toast(r.error);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
 
 var eqMode=null;
 var EQCFG={
@@ -448,16 +461,16 @@ function eqTapOwnE(i){if(!eqMode||!eqMode.cfg.own)return;var q=eqMode.own.indexO
 function ownNum(i){var t=VIEW.players[MYSEAT].tiles[i];return (t&&t.t==='B'&&!t.cut&&!t.done)?t.n:null;}
 function ownVal(i){var t=VIEW.players[MYSEAT].tiles[i];return (t&&!t.cut&&!t.done)?(t.t==='Y'?'Y':t.n):null;}
 function eqTry(){if(!eqMode)return;var k=eqMode.kind,p={};
-  if(k==='radar'){if(eqMode.own.length===1){var n=ownNum(eqMode.own[0]);if(n==null){alert('青コードを選んでね');eqMode.own=[];return;}p.n=n;eqSend(p);}}
-  else if(k==='reveal'){if(eqMode.own.length===1){var _ri=eqMode.own[0];var _rt=VIEW.players[MYSEAT].tiles[_ri];if(!_rt||_rt.t!=='B'||_rt.cut||_rt.done||_rt.revealed){alert('公開できる青コードを選んでね');eqMode.own=[];return;}p.idx=_ri;eqSend(p);}}
+  if(k==='radar'){if(eqMode.own.length===1){var n=ownNum(eqMode.own[0]);if(n==null){toast('青コードを選んでね');eqMode.own=[];return;}p.n=n;eqSend(p);}}
+  else if(k==='reveal'){if(eqMode.own.length===1){var _ri=eqMode.own[0];var _rt=VIEW.players[MYSEAT].tiles[_ri];if(!_rt||_rt.t!=='B'||_rt.cut||_rt.done||_rt.revealed){toast('公開できる青コードを選んでね');eqMode.own=[];return;}p.idx=_ri;eqSend(p);}}
   else if(k==='extra'){if(eqMode.team!=null){p.target=eqMode.team;eqSend(p);}}
-  else if(k==='super'){if(eqMode.team!=null&&eqMode.own.length===1){var n2=ownNum(eqMode.own[0]);if(n2==null){alert('青コードで数字を指定してね');eqMode.own=[];return;}p.target=eqMode.team;p.n=n2;eqSend(p);}}
+  else if(k==='super'){if(eqMode.team!=null&&eqMode.own.length===1){var n2=ownNum(eqMode.own[0]);if(n2==null){toast('青コードで数字を指定してね');eqMode.own=[];return;}p.target=eqMode.team;p.n=n2;eqSend(p);}}
   else if(k==='swap'){if(eqMode.team!=null&&eqMode.own.length===1){p.target=eqMode.team;p.give=eqMode.own[0];eqSend(p);}}
   else if(k==='kotonal'||k==='equal'){if(eqMode.own.length===2){p.tiles=eqMode.own.slice().sort(function(a,b){return a-b;});eqSend(p);}}
-  else if(k==='mitsu'){if(eqMode.team!=null&&eqMode.teamTiles.length===3&&eqMode.own.length===1){var n3=ownNum(eqMode.own[0]);if(n3==null){alert('青コードで数字を指定してね');eqMode.own=[];return;}p.targetPi=eqMode.team;p.idxs=eqMode.teamTiles.slice();p.decls=[n3];eqSend(p);}}
+  else if(k==='mitsu'){if(eqMode.team!=null&&eqMode.teamTiles.length===3&&eqMode.own.length===1){var n3=ownNum(eqMode.own[0]);if(n3==null){toast('青コードで数字を指定してね');eqMode.own=[];return;}p.targetPi=eqMode.team;p.idxs=eqMode.teamTiles.slice();p.decls=[n3];eqSend(p);}}
   else if(k==='dochi'){if(eqMode.team!=null&&eqMode.teamTiles.length===1&&eqMode.own.length===2){p.targetPi=eqMode.team;p.idxs=eqMode.teamTiles.slice();p.decls=[ownVal(eqMode.own[0]),ownVal(eqMode.own[1])];eqSend(p);}}
 }
-function eqBatteryGo(){if(!eqMode||eqMode.kind!=='battery')return;if(eqMode.teamList.length===0){alert('回復する仲間を選んでね');return;}eqSend({targets:eqMode.teamList.slice()});}
+function eqBatteryGo(){if(!eqMode||eqMode.kind!=='battery')return;if(eqMode.teamList.length===0){toast('回復する仲間を選んでね');return;}eqSend({targets:eqMode.teamList.slice()});}
 function eqSend(p){var ei=eqMode.ei;eqMode=null;act({kind:'useEquip',ei:ei,params:p});}
 var modal=null;
 function mates(){var a=[];VIEW.players.forEach(function(p,i){if(i!==MYSEAT)a.push(i);});return a;}
@@ -480,18 +493,18 @@ function modalGive(i){modal.give=i;renderModal();}
 function modalGo(){if(!modal)return;var k=modal.kind,p={},ei=modal.ei;
   if(k==='radar'){if(modal.n==null)return;p.n=modal.n;}
   else if(k==='extra'){if(modal.target==null)return;p.target=modal.target;}
-  else if(k==='battery'){if(modal.targets.length===0){alert('回復する仲間を選んでね');return;}p.targets=modal.targets.slice();}
-  else if(k==='super'){if(modal.target==null||modal.n==null){alert('対象と数字を選んでね');return;}p.target=modal.target;p.n=modal.n;}
-  else if(k==='swap'){if(modal.target==null||modal.give==null){alert('相手と渡すコードを選んでね');return;}p.target=modal.target;p.give=modal.give;}
+  else if(k==='battery'){if(modal.targets.length===0){toast('回復する仲間を選んでね');return;}p.targets=modal.targets.slice();}
+  else if(k==='super'){if(modal.target==null||modal.n==null){toast('対象と数字を選んでね');return;}p.target=modal.target;p.n=modal.n;}
+  else if(k==='swap'){if(modal.target==null||modal.give==null){toast('相手と渡すコードを選んでね');return;}p.target=modal.target;p.give=modal.give;}
   closeModal();act({kind:'useEquip',ei:ei,params:p});}
 
 function placeInfoTap(i){act({kind:'placeInfo',idx:i});}
 function placeMissInfoTap(i){act({kind:'placeMissInfo',idx:i});}
 function detPickTap(i){act({kind:'detPick',idx:i});}
-function act(move){return api('/api/room/'+CODE+'/action','POST',{playerId:PID,move:move}).then(function(r){if(!r.ok&&r.err)alert(r.err);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();});}
-function doCut2(){if(!selTarget||selOwn==null){alert('相手と自分の手札を1枚ずつタップしてね');return;}var t=VIEW.players[MYSEAT].tiles[selOwn];if(t.t==='Y')act({kind:'guessY',target:selTarget});else act({kind:'guess',n:t.n,target:selTarget});}
-function doCut1(){var s=ownSoloNumber();if(s==null){alert('単独で切れる自分の手札を選んでね');return;}if(s==='Y')act({kind:'soloY'});else act({kind:'solo',n:s});}
-function sendDetector(ownIdx){if(detSel.length!==2){alert('相手の手札を2枚タップしてね');return;}var t=VIEW.players[MYSEAT].tiles[ownIdx];if(t.t!=='B'){alert('数字（青）の手札で宣言してね');return;}act({kind:'detector',targetPi:detSel[0].pi,i1:detSel[0].i,i2:detSel[1].i,n:t.n});}
+function act(move){return api('/api/room/'+CODE+'/action','POST',{playerId:PID,move:move,rev:REV}).then(function(r){if(!r.ok&&r.err)toast(r.err);selTarget=null;selOwn=null;detMode=false;detSel=[];tick();}).catch(function(){toast('送信できませんでした。通信を確認してください');tick();});}
+function doCut2(){if(!selTarget||selOwn==null){toast('相手と自分の手札を1枚ずつタップしてね');return;}var t=VIEW.players[MYSEAT].tiles[selOwn];if(t.t==='Y')act({kind:'guessY',target:selTarget});else act({kind:'guess',n:t.n,target:selTarget});}
+function doCut1(){var s=ownSoloNumber();if(s==null){toast('単独で切れる自分の手札を選んでね');return;}if(s==='Y')act({kind:'soloY'});else act({kind:'solo',n:s});}
+function sendDetector(ownIdx){if(detSel.length!==2){toast('相手の手札を2枚タップしてね');return;}var t=VIEW.players[MYSEAT].tiles[ownIdx];if(t.t!=='B'){toast('数字（青）の手札で宣言してね');return;}act({kind:'detector',targetPi:detSel[0].pi,i1:detSel[0].i,i2:detSel[1].i,n:t.n});}
 (function(){var hadQ=false;try{var q=new URLSearchParams(location.search);if(q.get('server')){g('srv').value=q.get('server');hadQ=true;}if(q.get('code')){g('jc').value=(q.get('code')||'').toUpperCase();hadQ=true;}if(q.get('name'))g('nm').value=q.get('name');}catch(e){}
   if(!hadQ){try{var sv=JSON.parse(localStorage.getItem('bb_online')||'null');if(sv&&sv.SRV&&sv.CODE&&sv.PID)tryReconnect(sv);}catch(e){}}
   try{var q2=new URLSearchParams(location.search);if(q2.get('code')){var cc=g('createCard');if(cc)cc.classList.add('hidden');}}catch(e){}})();
