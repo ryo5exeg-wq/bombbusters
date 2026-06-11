@@ -207,18 +207,18 @@ body.disp-tab .sidetitle{display:none!important;}
 if(typeof deal==='undefined')document.write('<script src="game_core.js"><\/script>');</script>
 <script>
 var EQHELP={
- kotonal:['コトナルラベル','自分の隣り合う2本に「≠（数字が違う）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
- swap:['イレカエシーバー','自分が選んだ1本と、仲間が選んだ1本を交換する。交換する相手は装備の使用を宣言したプレイヤーが選ぶ。'],
+ kotonal:['コトナルラベル','自分の隣り合う2本に「≠（数字が違う）」の目印を付ける。コードが公開・非公開どちらでも使える。<b>自分の手番でなくても使える。</b>'],
+ swap:['イレカエシーバー','自分が選んだ1本と、仲間が選んだ1本を交換する。交換する相手は装備の使用を宣言したプレイヤーが選ぶ。<b>自分の手番でなくても使える。</b>'],
  mitsu:['ミッツケル探知機','数字を1つ宣言。対象の仲間の3本の中にその数字があれば1本切断。外れると残機-1。使うと手番は次の人へ。'],
- reveal:['ヒント付箋','自分の青コードを1本選んで情報トークンを置く。仲間へのヒントにする。'],
+ reveal:['ヒント付箋','自分の青コードを1本選んで情報トークンを置く。仲間へのヒントにする。<b>自分の手番でなくても使える。</b>'],
  super:['スーパー探知機','自分が持つ数字を1つ宣言。対象の仲間の手札全体にその数字があれば1枚切断。フツーノ探知機の上位版。使うと手番は次へ。'],
- life:['失敗帳消し機','残機を1つ回復する（＋1）。'],
- battery:['非常電池','探知機を使い切った仲間（最大2人）を選び、その探知機をもう一度使えるようにする。'],
- radar:['なんでもレーダー','数字を1つ宣言すると、その数字を伏せて持っているのが誰かが分かる。'],
- ice:['万能氷','この手番の失敗を無効化。次の宣言が赤でも爆発せず、外しても残機が減らない。'],
+ life:['失敗帳消し機','残機を1つ回復する（＋1）。<b>自分の手番でなくても使える。</b>'],
+ battery:['非常電池','探知機を使い切った仲間（最大2人）を選び、その探知機をもう一度使えるようにする。<b>自分の手番でなくても使える。</b>'],
+ radar:['なんでもレーダー','数字を1つ宣言すると、その数字を伏せて持っているのが誰かが分かる。<b>自分の手番でなくても使える。</b>'],
+ ice:['万能氷','この手番の失敗を無効化。次の宣言が赤でも爆発せず、外しても残機が減らない。<b>自分の手番の開始時（行動の前）に使う。</b>'],
  dochi:['ドッチカアタ・レイ','数字を2つ宣言。対象の仲間の1本がそのどちらかなら切断。外れると残機-1。使うと手番は次へ。'],
  extra:['いつでもコーヒー','自分以外の好きなプレイヤーを1人選び、その人から手番を再開する。'],
- equal:['イコールラベル','自分の隣り合う2本に「＝（数字が同じ）」の目印を付ける。コードが公開・非公開どちらでも使える。'],
+ equal:['イコールラベル','自分の隣り合う2本に「＝（数字が同じ）」の目印を付ける。コードが公開・非公開どちらでも使える。<b>自分の手番でなくても使える。</b>'],
  himitsu:['ヒミツ底','#9以降のミッションで登場。黄コードを切断すると使えるようになり、装備カードを2枚ランダムに追加する。']
 };
 var EQORDER=['kotonal','swap','mitsu','reveal','super','life','battery','radar','ice','dochi','extra','equal','himitsu'];
@@ -289,11 +289,11 @@ function useEquip(i){if(S.pickInfo)return;const e=S.equip[i];if(e.used||S.over)r
   if(e.kind==='super'){if(S.turn!==0){toast('スーパー探知機はあなたの手番に使います');return;}openEquipModal(i);return;}
   if(e.kind==='mitsu'){if(S.turn!==0){toast('ミッツケル探知機はあなたの手番に使います');return;}startEquipDetector('mitsu',i);return;}
   if(e.kind==='dochi'){if(S.turn!==0){toast('ドッチカアタ・レイはあなたの手番に使います');return;}startEquipDetector('dochi',i);return;}
-  if(e.kind==='kotonal'){if(S.turn!==0){toast('コトナルラベルはあなたの手番で使ってください');return;}startLabel('kotonal',i);return;}
-  if(e.kind==='equal'){if(S.turn!==0){toast('イコールラベルはあなたの手番で使ってください');return;}startLabel('equal',i);return;}
+  if(e.kind==='kotonal'){startLabel('kotonal',i);return;}
+  if(e.kind==='equal'){startLabel('equal',i);return;}
   if(e.kind==='battery'){var ub0=[];S.players.forEach(function(p,bi){if(!p.detector)ub0.push(bi);});if(ub0.length===0){toast('探知機を使ったプレイヤーがいないため回復できません');return;}openEquipModal(i);return;}
   if(e.kind==='ice'){if(S.turn!==0){toast('万能氷は自分の手番（行動の前）に使います');return;}S.iceShield=true;e.used=true;pushLog('装備「'+e.name+'」：この手番の失敗ペナルティを無効化（赤でも爆発しない・残機維持）。','ok');checkEnd();render();saveGame();return;}
-  if(e.kind==='swap'){if(S.turn!==0){toast('入れ替えはあなたの手番で使ってください');return;}openEquipModal(i);return;}
+  if(e.kind==='swap'){openEquipModal(i);return;}
   if(e.kind==='life'){S.lives=(S.lives+1);e.used=true;pushLog('装備「'+e.name+'」：残機+1。','ok');}
   else if(e.kind==='extra'){if(S.turn!==0){toast('いつでもコーヒーはあなたの手番に使います');return;}openEquipModal(i);return;}
   else if(e.kind==='reveal'){openEquipModal(i);return;}
