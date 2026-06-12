@@ -132,6 +132,31 @@ body.disp-tab .sidetitle{display:none!important;}
 #toasts{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none;width:min(92vw,430px);}
 .toastmsg{background:rgba(35,30,20,.93);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transform:translateY(-6px);transition:.25s;white-space:pre-line;text-align:center;}
 .toastmsg.show{opacity:1;transform:none;}
+/* ===== 配信ポップスキン（オーバーレイ画像と同系統: チャコール×ハザード黄×赤青） ===== */
+body.skin-pop{
+  --panel:#1d2027;--panel2:#262a34;--line:#3a3f4d;--gold:#FFD23F;
+  --text:#e8e9ef;--mut:#9aa0b2;--ink:#f3f4f8;
+  background:repeating-linear-gradient(135deg,#15171e 0 23px,#1a1d26 23px 46px);
+}
+body.skin-pop .card{box-shadow:0 3px 0 #0a0b0f,0 7px 16px rgba(0,0,0,.4);}
+body.skin-pop button{color:#1a1c22;box-shadow:0 3px 0 #b98e12;}
+body.skin-pop button.blue{color:#fff;}
+body.skin-pop button.sec{background:#262a34;color:var(--text);box-shadow:0 3px 0 #0a0b0f;}
+body.skin-pop button.ghost{background:#1d2027;color:var(--mut);}
+body.skin-pop button.danger{background:#2a1518;box-shadow:0 3px 0 #571f24;}
+body.skin-pop .tag{color:#1a1c22;border-color:#c9970f;}
+body.skin-pop .pill{background:#262a34;}
+body.skin-pop .pill.on{color:#1a1c22;}
+body.skin-pop .tnum{background:#262a34;}
+body.skin-pop .log{background:#14161c;}
+body.skin-pop .log div{border-bottom-color:#2a2e3a;}
+body.skin-pop .log .me{color:#FFD23F;}
+body.skin-pop .myhandwrap{background:#23262f;box-shadow:0 2px 0 #0a0b0f;}
+body.skin-pop .declare{background:#1d2027;}
+body.skin-pop .banner.win{background:#11331f;color:#7ce3a4;}
+body.skin-pop .banner.lose{background:#3a1418;color:#ff8a8e;}
+body.skin-pop input,body.skin-pop select{background:#262a34;color:var(--text);border-color:var(--line);}
+body.skin-pop .prow{background:#262a34;}
 /* ===== 配信用演出 ===== */
 .fx-flash{position:fixed;inset:0;z-index:600;pointer-events:none;animation:fxfade .5s forwards;}
 @keyframes fxfade{from{opacity:1}to{opacity:0}}
@@ -182,7 +207,7 @@ body.disp-tab .sidetitle{display:none!important;}
   <div id="banner"></div>
   <div class="boardgrid">
     <div class="card boardequip">
-      <h2><span class="tag">ボード（位置トラック）</span> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" onclick="openHelp()">？あそびかた</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="dispBtn" onclick="toggleDisp()">📱配信用</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="fxBtn" onclick="toggleFx()">🔊演出</button> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
+      <h2><span class="tag">ボード（位置トラック）</span> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" onclick="openHelp()">？あそびかた</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="dispBtn" onclick="toggleDisp()">📱配信用</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="fxBtn" onclick="toggleFx()">🔊演出</button> <button class="ghost" style="font-size:11px;padding:4px 10px;box-shadow:none;min-width:0" id="skinBtn" onclick="toggleSkin()">🎨配信スキン</button> <span class="boardlives"><span class="bll">残機</span> <span id="kLives" class="lives"></span></span></h2>
       <div class="track" id="ledger"></div>
       <div class="legend"><span><span class="dot" style="background:#9bdd6f"></span>切断完了</span> <span><span class="dot" style="background:#d53c3c;border-radius:50%"></span>赤</span> <span><span class="dot" style="background:#efd82d"></span>黄</span> <span>？＝未確定</span> <span>上の白タブ＝情報トークン</span></div>
       <div id="prioStrip"></div>
@@ -235,6 +260,11 @@ function applyDisp(){var on=false;try{on=localStorage.getItem('bb_disp')==='tab'
  document.body.classList.toggle('disp-tab',on);
  var b=document.getElementById('dispBtn');if(b)b.textContent=on?'🖥️PC表示に戻す':'📱配信用(縦長)';}
 function toggleDisp(){try{localStorage.setItem('bb_disp',localStorage.getItem('bb_disp')==='tab'?'pc':'tab');}catch(e){}applyDisp();}
+function applySkin(){var on=false;try{on=localStorage.getItem('bb_skin')==='pop';}catch(e){}
+ document.body.classList.toggle('skin-pop',on);
+ var b=document.getElementById('skinBtn');if(b)b.textContent=on?'🎨通常配色':'🎨配信スキン';}
+function toggleSkin(){try{localStorage.setItem('bb_skin',localStorage.getItem('bb_skin')==='pop'?'std':'pop');}catch(e){}applySkin();}
+applySkin();
 /* PWA: https配信時のみService Worker登録（最新優先・オフライン時キャッシュ） */
 if('serviceWorker' in navigator && location.protocol==='https:'){try{navigator.serviceWorker.register('sw.js');}catch(e){}}
 
