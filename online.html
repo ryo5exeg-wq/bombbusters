@@ -223,6 +223,7 @@ body.skin-pop .prow{background:#262a34;}
         <option value="11">#11 赤のような青</option>
         <option value="16">#16 つじつまは合っている</option>
         <option value="20">#20 悪い狼</option>
+        <option value="21">#21 ハギスによる死</option>
       </select></div>
       <div><label>人数</label><select id="pc"><option value="4">4人</option><option value="5">5人</option></select></div>
     </div>
@@ -392,6 +393,7 @@ function tileHTML(t,isYou){
   // teammate code with an info token (revealed, not cut): stay FACE-DOWN, show number on the token
   if(!isYou && t.revealed && !t.cut && !t.done){
     if(t.t==='Y') return '<div class="tile back'+xc+'">'+xm+'<span class="tk yel"></span></div>';
+    if(t.parity!=null) return '<div class="tile back'+xc+'">'+xm+'<span class="tk par">'+(t.parity?'奇':'偶')+'</span></div>';
     return '<div class="tile back'+xc+'">'+xm+'<span class="tk">'+t.n+'</span></div>';
   }
   var cut=(t.cut||t.done)?' cut':'';
