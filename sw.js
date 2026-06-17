@@ -1,6 +1,6 @@
-const C='bombbusters-v1';
+const C='bombbusters-v2';
 self.addEventListener('install',function(e){
-  e.waitUntil(caches.open(C).then(function(c){return c.addAll(['./','./index.html','./game_core.js','./manifest.webmanifest','./icon-192.png']);}).catch(function(){}));
+  e.waitUntil(caches.open(C).then(function(c){return c.addAll(['./','./index.html','./online.html','./game_core.js','./manifest.webmanifest','./online.webmanifest','./icon-192.png']);}).catch(function(){}));
   self.skipWaiting();
 });
 self.addEventListener('activate',function(e){
