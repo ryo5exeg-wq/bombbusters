@@ -253,7 +253,7 @@ var EQHELP={
  dochi:['ドッチカアタ・レイ','数字を2つ宣言。対象の仲間の1本がそのどちらかなら切断。外れると残機-1。使うと手番は次へ。'],
  extra:['いつでもコーヒー','自分以外の好きなプレイヤーを1人選び、その人から手番を再開する。'],
  equal:['イコールラベル','自分の隣り合う2本に「＝（数字が同じ）」の目印を付ける。コードが公開・非公開どちらでも使える。<b>自分の手番でなくても使える。</b>'],
- himitsu:['ヒミツ底','#9以降のミッションで登場。黄コードを切断すると使えるようになり、装備カードを2枚ランダムに追加する。']
+ himitsu:['ヒミツ底','#9以降のミッションで登場。黄コードを切断すると使えるようになり（即時効果）、装備カードを2枚ランダムに追加する。解禁後はいつでも（自分の手番でなくても）使える。']
 };
 var EQORDER=['kotonal','swap','mitsu','reveal','super','life','battery','radar','ice','dochi','extra','equal','himitsu'];
 function eqHelpListHTML(){return EQORDER.map(function(k){var h=EQHELP[k];return '<div class="eqsec"><div class="myhandlabel">'+h[0]+'</div><div class="muted">'+h[1]+'</div></div>';}).join('');}
