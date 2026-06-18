@@ -296,7 +296,7 @@ var EQHELP={
  dochi:['ドッチカアタ・レイ','数字を2つ宣言。対象の仲間の1本がそのどちらかなら切断。外れると残機-1。使うと手番は次へ。'],
  extra:['いつでもコーヒー','自分以外の好きなプレイヤーを1人選び、その人から手番を再開する。'],
  equal:['イコールラベル','自分の隣り合う2本に「＝（数字が同じ）」の目印を付ける。コードが公開・非公開どちらでも使える。<b>自分の手番でなくても使える。</b>'],
- himitsu:['ヒミツ底','#9以降のミッションで登場。黄コードを切断すると使えるようになり、装備カードを2枚ランダムに追加する。']
+ himitsu:['ヒミツ底','#9以降のミッションで登場。黄コードを切断すると使えるようになり、装備カードを2枚ランダムに追加する。<b>黄コード切断後はいつでも（自分の手番でなくても）使える即時効果。</b>']
 };
 var EQORDER=['kotonal','swap','mitsu','reveal','super','life','battery','radar','ice','dochi','extra','equal','himitsu'];
 function eqHelpListHTML(){return EQORDER.map(function(k){var h=EQHELP[k];return '<div class="eqsec"><div class="myhandlabel">'+h[0]+'</div><div class="muted">'+h[1]+'</div></div>';}).join('');}
@@ -410,10 +410,14 @@ function L(i){return String.fromCharCode(65+i);}
 function prioLockedN(n){if(!VIEW.prio)return false;var idx=VIEW.prio.nums.indexOf(n);return idx>VIEW.prio.ptr;}
 function cutCount(n){return (VIEW.cut&&VIEW.cut[n])||0;}
 
+// 「自分の手番でなくても使える」装備の種類（サーバー applyEquip の ANYTIME と一致させる）
+var EQ_ANYTIME=['kotonal','equal','reveal','swap','life','battery','radar','himitsu'];
+function eqIsAnytime(kind){return EQ_ANYTIME.indexOf(kind)>=0;}
+
 function renderGame(){
   var v=VIEW;
-  if(eqMode&&(v.turn!==MYSEAT||v.over))eqMode=null;
-  if(modal&&(v.turn!==MYSEAT||v.over))closeModal();
+  if(eqMode&&(v.over||(v.turn!==MYSEAT&&!eqIsAnytime(eqMode.kind))))eqMode=null;
+  if(modal&&(v.over||(v.turn!==MYSEAT&&!eqIsAnytime(modal.kind))))closeModal();
   var bn=g('banner');bn.className='';bn.innerHTML='';
   if(v.over==='win'){bn.className='banner win';bn.textContent='🎉 ミッション成功！';}
   if(v.over==='lose'){bn.className='banner lose';bn.textContent='💥 失敗…爆発しました';}
@@ -435,7 +439,7 @@ function renderGame(){
   var ps=g('prioStrip');if(v.prio){var ph='<div class="prio"><span class="plabel">順番に切断</span>';v.prio.nums.forEach(function(nn,ii){var st=(ii<v.prio.ptr)?'done':(ii===v.prio.ptr?'cur':'lock');ph+='<span class="pchip '+st+'">'+L(ii).toLowerCase()+': <b>'+nn+'</b> '+(st==='done'?'✓':(st==='cur'?('◀今ここ '+cutCount(nn)+'/'+(v.prio.thr||2)):'🔒'))+'</span>';if(ii<2)ph+='<span class="parrow">→</span>';});ph+='</div>';ps.innerHTML=ph;}else ps.innerHTML='';
 
   // equipment (display only for now)
-  var ew=g('equip');ew.innerHTML='';if(v.equip.length){var er=document.createElement('div');er.className='btnrow';v.equip.forEach(function(e,ei){var unlocked=(e.kind==='himitsu')?(v.yCut>0):(cutCount(e.num)>=2);var usable=!e.used&&unlocked&&v.turn===MYSEAT&&!v.over&&!v.infoPhase;var b=document.createElement('button');b.className=usable?'sec':'ghost';b.style.minWidth='130px';b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':(unlocked?' ?':' 🔒'));b.title=usable?'':'タップで効果を確認';b.onclick=usable?(function(j){return function(){startEq(j);};})(ei):(function(k){return function(){showEqHelp(k);};})(e.kind);er.appendChild(b);});ew.appendChild(er);}else ew.innerHTML='<div class="muted">装備なし</div>';
+  var ew=g('equip');ew.innerHTML='';if(v.equip.length){var er=document.createElement('div');er.className='btnrow';v.equip.forEach(function(e,ei){var unlocked=(e.kind==='himitsu')?(v.yCut>0):(cutCount(e.num)>=2);var usable=!e.used&&unlocked&&!v.over&&!v.infoPhase&&(v.turn===MYSEAT||eqIsAnytime(e.kind));var b=document.createElement('button');b.className=usable?'sec':'ghost';b.style.minWidth='130px';b.textContent=((e.kind==='himitsu')?e.name:('['+e.num+'] '+e.name))+(e.used?' ✓':(unlocked?' ?':' 🔒'));b.title=usable?'':'タップで効果を確認';b.onclick=usable?(function(j){return function(){startEq(j);};})(ei):(function(k){return function(){showEqHelp(k);};})(e.kind);er.appendChild(b);});ew.appendChild(er);}else ew.innerHTML='<div class="muted">装備なし</div>';
 
   // hands (captain first), own highlighted
   var hw=g('hands');hw.innerHTML='';
@@ -512,7 +516,7 @@ var EQCFG={
  mitsu:{team:1,teamTiles:3,own:1,label:'相手のコードを3本 → 自分の数字、をタップ'},
  dochi:{team:1,teamTiles:1,own:2,label:'相手のコード1本 → 自分の数字を2つ、をタップ'}
 };
-function startEq(ei){var e=VIEW.equip[ei];if(!e||e.used||VIEW.turn!==MYSEAT)return;var k=e.kind;
+function startEq(ei){var e=VIEW.equip[ei];if(!e||e.used)return;if(VIEW.turn!==MYSEAT&&!eqIsAnytime(e.kind))return;var k=e.kind;
   if(k==='life'||k==='ice'||k==='himitsu'){act({kind:'useEquip',ei:ei,params:{}});return;}
   if(k==='radar'||k==='extra'||k==='battery'||k==='super'||k==='swap'){openEquipModal(ei);return;}
   eqMode={ei:ei,kind:k,cfg:EQCFG[k],team:null,teamTiles:[],teamList:[],own:[]};renderGame();}
