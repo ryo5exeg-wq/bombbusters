@@ -424,7 +424,7 @@ function render(){
         if(S.pick&&t.t==='B'&&t.n===S.pick.n&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPickOwn(i);}
         if(S.detPick){var _okk=(S.detPick.hitVal==='Y')?(t.t==='Y'&&!t.cut&&!t.done):(t.t==='B'&&t.n===S.detPick.hitVal&&!t.cut&&!t.done);if(_okk){el.classList.add('sel');el.onclick=()=>youDetPickOwn(i);}}
         if(S.infoPlace&&S.infoPlace.opts&&S.infoPlace.opts.indexOf(i)>=0){el.classList.add('sel');el.onclick=()=>placeMissInfo(i);}
-        if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPlaceInfo(i);}
+        if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done&&!t.xcode){el.classList.add('sel');el.onclick=()=>youPlaceInfo(i);}
         if(S.swapMode&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youSwapGive(i);}
         if(S.labelMode){el.onclick=()=>youLabelSelect(i);if(S.labelSel.some(function(x){return x.i===i;}))el.classList.add('sel');}
         if(S.turn===0&&!S.over&&act&&!S.pick&&!S.detPick&&!S.infoPlace&&!S.pickInfo&&!S.swapMode&&!S.labelMode){el.onclick=()=>youOwnSelect(i);if(S.ownSel===i)el.classList.add('sel');}

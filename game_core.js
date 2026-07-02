@@ -271,7 +271,7 @@ function youDetPickOwn(idx){if(!S.detPick)return;S.passStreak=0;var dp=S.detPick
 function placeMissInfo(idx){if(!S.infoPlace||!S.infoPlace.opts||S.infoPlace.opts.indexOf(idx)<0)return;var t=S.players[0].tiles[idx];if(!t||t.cut||t.done||t.revealed)return;t.revealed=true;var lbl=(t.t==='Y')?(t.n+'.1'):t.n;pushLog('<b>あなた</b>：情報トークンを自分の'+L(idx)+'（'+lbl+'）に置いた。','me');S.infoPlace=null;checkEnd();if(S.over){render();saveGame();return;}nextTurn();}
 function cancelPick(){S.pick=null;render();}
 function runInfoPhase(){if(!S.infoPhase)return;if(S.infoIdx>=S.order.length){S.infoPhase=false;S.turn=S.captain;S._pending=(!S.over&&S.turn!==0)?decideMove(S.turn):null;pushLog('全員が情報トークンを置いた。切断スタート！');render();saveGame();scheduleAuto();return;}var pi=S.order[S.infoIdx];S.turn=pi;if(pi===0){S.pickInfo=true;render();saveGame();return;}var P=S.players[pi];var c=P.tiles.map(function(t,i){return i;}).filter(function(i){return P.tiles[i].t==='B'&&!P.tiles[i].revealed&&!P.tiles[i].cut&&!P.tiles[i].done;});if(c.length){var idx=c[Math.floor(Math.random()*c.length)];P.tiles[idx].revealed=true;pushLog('<b>'+P.name+'</b> が情報トークンを '+L(idx)+'（'+P.tiles[idx].n+'）に置いた。');}S.infoIdx++;render();saveGame();setTimeout(runInfoPhase,900);}
-function youPlaceInfo(idx){if(!S.pickInfo)return;var t=S.players[0].tiles[idx];if(!(t&&t.t==='B'&&!t.cut&&!t.done&&!t.revealed))return;t.revealed=true;S.pickInfo=false;pushLog('<b>あなた</b> が情報トークンを '+L(idx)+'（'+t.n+'）に置いた。','me');S.infoIdx++;render();saveGame();runInfoPhase();}
+function youPlaceInfo(idx){if(!S.pickInfo)return;var t=S.players[0].tiles[idx];if(!(t&&t.t==='B'&&!t.cut&&!t.done&&!t.revealed&&!t.xcode))return;t.revealed=true;S.pickInfo=false;pushLog('<b>あなた</b> が情報トークンを '+L(idx)+'（'+t.n+'）に置いた。','me');S.infoIdx++;render();saveGame();runInfoPhase();}
 function youSolo(n){if(S.pickInfo)return;if(prioLocked(n)){alert('「'+n+'」はまだ切断できません（優先順位）');return;}S.passStreak=0;const t=S.players[0].tiles.filter(x=>x.t==='B'&&x.n===n&&!x.cut);if(t.length<2||t.length!==(4-cutBlue(n))){alert('単独切断は「その数字の残り全部を自分が持つ」ときだけ');return;}t.forEach(x=>x.cut=true);recomputeCuts();pushLog('<b>あなた</b>：単独切断 '+n+' → '+t.length+'本切断。','me');checkEnd();nextTurn();}
 function youSoloYellow(){if(S.pickInfo)return;S.passStreak=0;var mine=S.players[0].tiles.filter(function(t){return t.t==='Y'&&!t.cut&&!t.done;});var total=0;S.players.forEach(function(p){p.tiles.forEach(function(t){if(t.t==='Y'&&!t.cut&&!t.done)total++;});});if(mine.length<2||mine.length!==total){alert('黄の単独切断は「残りの黄を全部自分が持つ（2枚以上）」ときだけ');return;}var c=0;mine.forEach(function(t){t.cut=true;c++;});S.yCut+=c;pushLog('<b>あなた</b>：黄を単独で切断 → '+c+'本切断。','me');checkEnd();nextTurn();}
 function youRevealRed(){if(S.pickInfo)return;const act=S.players[0].tiles.filter(t=>!t.cut&&!t.done);if(!act.length||!act.every(t=>t.t==='R')){alert('赤の公開は「手札が赤のみ」になったときだけできます');return;}let c=0;act.forEach(t=>{t.done=true;t.revealed=true;S.redDone++;c++;});pushLog('<b>あなた</b>：手札が赤のみ → 赤'+c+'本をすべて公開（無力化）。','me');checkEnd();nextTurn();}
@@ -370,7 +370,7 @@ function render(){
         if(S.pick&&t.t==='B'&&t.n===S.pick.n&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPickOwn(i);}
         if(S.detPick){var _okk=(S.detPick.hitVal==='Y')?(t.t==='Y'&&!t.cut&&!t.done):(t.t==='B'&&t.n===S.detPick.hitVal&&!t.cut&&!t.done);if(_okk){el.classList.add('sel');el.onclick=()=>youDetPickOwn(i);}}
         if(S.infoPlace&&S.infoPlace.opts&&S.infoPlace.opts.indexOf(i)>=0){el.classList.add('sel');el.onclick=()=>placeMissInfo(i);}
-        if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youPlaceInfo(i);}
+        if(S.pickInfo&&t.t==='B'&&!t.cut&&!t.done&&!t.xcode){el.classList.add('sel');el.onclick=()=>youPlaceInfo(i);}
         if(S.swapMode&&!t.cut&&!t.done){el.classList.add('sel');el.onclick=()=>youSwapGive(i);}
         if(S.labelMode){el.onclick=()=>youLabelSelect(i);if(S.labelSel.some(function(x){return x.i===i;}))el.classList.add('sel');}
         if(S.turn===0&&!S.over&&act&&!S.pick&&!S.detPick&&!S.infoPlace&&!S.pickInfo&&!S.swapMode&&!S.labelMode){el.onclick=()=>youOwnSelect(i);if(S.ownSel===i)el.classList.add('sel');}
@@ -417,7 +417,7 @@ function finishInfoPhase(){
   S.infoPhase=false; S.pickInfo=false; S.infoIdx=(S.order?S.order.length:0);
   (S.order||[]).forEach(function(pi){
     var P=S.players[pi], c=[];
-    P.tiles.forEach(function(t,i){ if(t.t==='B'&&!t.revealed&&!t.cut&&!t.done) c.push(i); });
+    P.tiles.forEach(function(t,i){ if(t.t==='B'&&!t.revealed&&!t.cut&&!t.done&&!t.xcode) c.push(i); });
     if(c.length) P.tiles[c[Math.floor(Math.random()*c.length)]].revealed = true;
   });
   S.turn = S.captain;
@@ -430,7 +430,7 @@ function serverInfoStep(humanSeats){
     var pi=S.order[S.infoIdx];
     if(humanSeats.indexOf(pi)>=0){ S.turn=pi; S.pickInfo=true; return; }
     var P=S.players[pi], c=[];
-    P.tiles.forEach(function(t,i){ if(t.t==='B'&&!t.revealed&&!t.cut&&!t.done) c.push(i); });
+    P.tiles.forEach(function(t,i){ if(t.t==='B'&&!t.revealed&&!t.cut&&!t.done&&!t.xcode) c.push(i); });
     if(c.length) P.tiles[c[Math.floor(Math.random()*c.length)]].revealed=true;
     S.infoIdx++;
   }
@@ -467,7 +467,7 @@ function autoResolvePauses(humanSeats){
     }
     if(S.infoPhase && S.pickInfo && humanSeats.indexOf(S.turn)<0){
       var P=S.players[S.turn], c=[];
-      P.tiles.forEach(function(t,i){ if(t.t==='B'&&!t.revealed&&!t.cut&&!t.done) c.push(i); });
+      P.tiles.forEach(function(t,i){ if(t.t==='B'&&!t.revealed&&!t.cut&&!t.done&&!t.xcode) c.push(i); });
       if(c.length) P.tiles[c[Math.floor(Math.random()*c.length)]].revealed=true;
       S.pickInfo=false; S.infoIdx++; serverInfoStep(humanSeats); changed=true;
     }
@@ -512,7 +512,7 @@ function applyMove(seat, mv, humanSeats){
   if(mv && mv.kind==='placeInfo'){
     if(!(S.infoPhase && S.pickInfo && S.turn===seat)) return {ok:false, err:'今は配置のタイミングではありません'};
     var pt=S.players[seat].tiles[mv.idx];
-    if(!pt || pt.t!=='B' || pt.cut || pt.done || pt.revealed) return {ok:false, err:'自分の青コードを選んでください'};
+    if(!pt || pt.t!=='B' || pt.cut || pt.done || pt.revealed || pt.xcode) return {ok:false, err:'自分の青コードを選んでください'};
     pt.revealed=true; S.pickInfo=false; S.infoIdx++; serverInfoStep(humanSeats); return {ok:true};
   }
   if(mv && mv.kind==='revealAllRed'){
@@ -549,8 +549,8 @@ function applyEquip(seat, ei, params, humanSeats){
   if(S.infoPhase) return {ok:false,err:'準備中は使えません'};
   var e=S.equip[ei]; if(!e) return {ok:false,err:'装備が見つかりません'};
   // 「いつでも使える」装備は他人の手番でも使用できる（実物カード準拠）
-  // ラベル2種・ヒント付箋・イレカエシーバー・失敗帳消し機・非常電池・なんでもレーダー
-  var ANYTIME=['kotonal','equal','reveal','swap','life','battery','radar'];
+  // ラベル2種・ヒント付箋・イレカエシーバー・失敗帳消し機・非常電池・なんでもレーダー・ヒミツ底（黄切断で即時）
+  var ANYTIME=['kotonal','equal','reveal','swap','life','battery','radar','himitsu'];
   if(S.turn!==seat && ANYTIME.indexOf(e.kind)<0) return {ok:false,err:'あなたの手番に使ってください'};
   if(e.used) return {ok:false,err:'使用済みです'};
   if(e.kind==='himitsu'){ if(S.yCut<=0) return {ok:false,err:'ヒミツ底は黄コードを切断すると使えます'}; }

@@ -457,7 +457,7 @@ function renderGame(){
       if(eqMode){ if(isYou&&act){el.onclick=(function(j){return function(){eqTapOwnE(j);};})(i);if(eqMode.own.indexOf(i)>=0)el.classList.add('sel');} else if(!isYou&&act){el.onclick=(function(pp,j){return function(){eqTapOpp(pp,j);};})(pi,i);if(eqOppSel(pi,i))el.classList.add('sel');} }
       else if(v.youPlaceMissInfo){ if(isYou&&v.missOpts&&v.missOpts.indexOf(i)>=0){el.onclick=(function(j){return function(){placeMissInfoTap(j);};})(i);el.classList.add('sel');} }
       else if(v.youDetPick){ if(isYou&&act&&((v.detPickVal==='Y'&&t.t==='Y')||(t.t==='B'&&t.n===v.detPickVal))){el.onclick=(function(j){return function(){detPickTap(j);};})(i);el.classList.add('sel');} }
-      else if(v.infoPhase){ if(isYou&&v.youPlaceInfo&&t.t==='B'&&act&&!t.revealed){el.onclick=(function(j){return function(){placeInfoTap(j);};})(i);el.classList.add('sel');} }
+      else if(v.infoPhase){ if(isYou&&v.youPlaceInfo&&t.t==='B'&&act&&!t.revealed&&!t.xcode){el.onclick=(function(j){return function(){placeInfoTap(j);};})(i);el.classList.add('sel');} }
       else if(isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(j){return function(){tapOwn(j);};})(i);if(selOwn===i)el.classList.add('sel');}
       else if(!isYou&&act&&v.turn===MYSEAT&&!v.over){el.onclick=(function(pp,j){return function(){tapOpp(pp,j);};})(pi,i);
         if(selTarget&&selTarget.pi===pi&&selTarget.i===i)el.classList.add('sel');
